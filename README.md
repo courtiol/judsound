@@ -13,7 +13,7 @@ That may be fine during the day, but in the middle of the night, the light will 
 
 This is a big issue if you listen to music tracks (e.g., guided meditation) as a mean to put yourself back to sleep.
 
-Also, you may want to consider that phones should not enter bed rooms.
+Also, you may want to consider that phones should not enter bedrooms.
 
 
 ## Specificities
@@ -44,8 +44,9 @@ Also, you may want to consider that phones should not enter bed rooms.
 - I never did Python programming myself before, nor electronics, nor true wood working (but I have some experience in programming and DIY outside those areas)
 
 Mind however that I do not mind spending some money to buy good tools or nice pieces.
+I will document the cost, but this project, especially since I did not have much equipment to begin with, makes no economic sense. That is not the point.
 
-I will document the cost, but this projects, especially since I did not have much equipment, makes no economic sense. That is not the point.
+The point is to build a complete, functional, device meeting the wishes of my wife, by drawing on general knowledge I developed for completely different purposes (i.e., scientific research and data analysis). 
 
 
 ## Repository
