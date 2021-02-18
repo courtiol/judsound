@@ -9,7 +9,7 @@ import time
 
 
 class Mode:
-    "Define the class Mode which keeps track of the current operating mode and allows for changing it"
+    "Define class which keeps track of the current operating mode and allows for changing it"
     possible = ["player_night"]
 
     def __init__(self, i = 0):
@@ -35,7 +35,7 @@ class Mode:
 
 
 class Volume:
-    "Define the class Volume which keeps track of the volume and allows for changing it"
+    "Define class which keeps track of the volume and allows for changing it"
 
     def __init__(self, vol_ini = 30, vol_step = 1, vol_max = 100):
         "Initialize the volume"
@@ -78,7 +78,7 @@ class Volume:
 
 
 class Player:
-    "Define the class Player which handles the music (VLC) player"
+    "Define class which handles the music (VLC) player"
 
     def __init__(self, path_music):
         "initialize a VLC player"
