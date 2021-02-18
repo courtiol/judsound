@@ -105,8 +105,8 @@ class Player:
     def play(self, track):
         "Updates the status of the player after a push button has been pressed"
         track_index = track - 1
-        if self.player.get_media() == None or 
-                os.path.basename(self.player.get_media().get_mrl()) != self.tracks_files[track_index]:
+        if self.player.get_media() == None or os.path.basename(
+                self.player.get_media().get_mrl()) != self.tracks_files[track_index]:
             # case no track or other track playing 
             # -> we start playing the good track
             self.player.stop()
