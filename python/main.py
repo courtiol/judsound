@@ -175,11 +175,15 @@ def held(btn):
   btn.was_held = True
 
 def clock():
+  "Read the time out load"
   hours = time.strftime("%H", time.localtime())
   minutes = time.strftime("%M", time.localtime())
   print("It is " + hours + " " + minutes)
   player_system.play_track(hours + ".mp3")
   time.sleep(0.7)
+  if minutes < "10":
+      player_system.play_track("00.mp3")
+      time.sleep(0.4)
   player_system.play_track(minutes + ".mp3")
 
 
