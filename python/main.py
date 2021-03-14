@@ -11,7 +11,7 @@ import time
 class Player:
     "Define class which handles the music (VLC) player"
 
-    def __init__(self, path_music, vol):
+    def __init__(self, path_music):
         "initialize a VLC player"
         instance_vlc = vlc.Instance()
         self.player = instance_vlc.media_player_new()
@@ -75,46 +75,29 @@ class Player:
         self.player.stop()
 
 
-class Volume:
-    "Define class which keeps track of the volume"
-
-    def __init__(self, vol_baseline, vol_step, vol_max):
-        "Initialize the volume"
-        self.volume_baseline = vol_baseline
-        self.current = vol_baseline
-        self.step = vol_step
-        self.max = vol_max
-
-    def reset(self):
-        "Reset volume to baseline"
-        self.current = self.volume_baseline
-        print("volume rest to " + str(self.current))
-
-
 class Clock:
     "Read the time out load"
 
-    def __init__(self, volume, player_system, vol_diff_hours = 3,
+    def __init__(self, player_system, vol_diff_hours = 3,
                  pause_h_m = 0.7, pause_m_m = 0.4):
        "Initialize the clock"
        self.extra_volume_hours = vol_diff_hours
-       self.volume = volume
        self.player_system = player_system
        self.pause_h_m = pause_h_m
        self.pause_m_m = pause_m_m
 
-    def speak(self):
+    def speak(self, volume):
         hours = time.strftime("%H", time.localtime())
         minutes = time.strftime("%M", time.localtime())
         print("It is " + hours + " " + minutes)
         self.player_system.play_sound(trackname = hours + ".mp3",
-                                          vol = self.volume.current + self.extra_volume_hours)
+                                          vol = volume + self.extra_volume_hours)
         time.sleep(self.pause_h_m)
         if minutes < "10":
             self.player_system.play_sound(trackname = "00.mp3",
-                                              vol = self.volume.current)
+                                              vol = volume)
             time.sleep(self.pause_m_m)
-        self.player_system.play_sound(minutes + ".mp3", vol = self.volume.current)
+        self.player_system.play_sound(minutes + ".mp3", vol = volume)
 
 
 class Box:
@@ -131,12 +114,13 @@ class Box:
         "Initialize the box"
         self.mode_list = possible_modes
         self.mode_current = possible_modes[0]
-        self.player_system = Player(path_music = path_system_sound, vol = vol_ini)
+        self.player_system = Player(path_music = path_system_sound)
         self.player_system.play_sound(trackname = "start.wav", vol = vol_startup)
-        self.player_music = Player(path_music = path_music_sound, vol = vol_ini)
-        self.volume = Volume(vol_baseline = vol_ini, vol_step = vol_step, vol_max = vol_max)
-        self.clock = Clock(volume = self.volume,
-                           player_system = self.player_system,
+        self.player_music = Player(path_music = path_music_sound)
+        self.volume_current = vol_ini
+        self.volume_step = vol_step
+        self.volume_max = vol_max
+        self.clock = Clock(player_system = self.player_system,
                            vol_diff_hours = vol_diff_hours,
                            pause_h_m = pause_h_m, pause_m_m = pause_m_m)
         
@@ -195,7 +179,7 @@ class Box:
                 button.was_held = False
             else:
                 print("button " + str(button_number) + " was pressed")
-                self.player_music.play_music(tracknumber = button_number, vol = self.volume.current)
+                self.player_music.play_music(tracknumber = button_number, vol = self.volume_current)
 
     def push_mode_button(self):
         "Change the mode to the next one"
@@ -207,21 +191,21 @@ class Box:
                 print(self.mode_current)
                 self.button_rotary_push.was_held = False
         else:
-                self.clock.speak()
+                self.clock.speak(volume = self.volume_current)
 
     def increase_volume(self):
         "Increase volume by one step"
         if self.button_rotary_CLK.value == 1 and self.button_rotary_DT.value == 0:
-            self.volume.current = min(self.volume.current + self.volume.step, self.volume.max)
-            self.player_music.update_volume(self.volume.current)
-            self.player_system.update_volume(self.volume.current)
+            self.volume_current = min(self.volume_current + self.volume_step, self.volume_max)
+            self.player_music.update_volume(self.volume_current)
+            self.player_system.update_volume(self.volume_current)
 
     def decrease_volume(self):
         "Decrease volume by one step"
         if self.button_rotary_CLK.value == 0 and self.button_rotary_DT.value == 1:
-            self.volume.current = max(self.volume.current - self.volume.step, 0)
-            self.player_music.update_volume(self.volume.current)
-            self.player_system.update_volume(self.volume.current)
+            self.volume_current = max(self.volume_current - self.volume_step, 0)
+            self.player_music.update_volume(self.volume_current)
+            self.player_system.update_volume(self.volume_current)
 
 
 ## RUNNING THE PROGRAM
