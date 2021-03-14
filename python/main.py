@@ -85,9 +85,10 @@ class Player:
         self.player.play()
         self.update_volume(vol) # note that volume is not reset after but it should not be a problem
 
-    def update_volume(self, vol):
+    def update_volume(self, vol, to_print = True):
         "Update the volume of the player"
-        print("Update volume to " + str(vol))
+        if to_print:
+            print("Update volume to " + str(vol))
         self.player.audio_set_volume(vol)
 
     def stop(self):
@@ -202,15 +203,14 @@ class Box:
         self.button_rotary_push.when_held = self.held
 
         # trigger action when button is released
-        self.button_1.when_released = lambda x = 1: self.push_top_button(self.button_1, button_number = x)
-        self.button_2.when_released = lambda x = 2: self.push_top_button(self.button_2, button_number = x)
-        self.button_3.when_released = lambda x = 3: self.push_top_button(self.button_3, button_number = x)
-        self.button_4.when_released = lambda x = 4: self.push_top_button(self.button_4, button_number = x)
+        self.button_1.when_released = lambda x = 1: self.push_top_button(button = self.button_1, button_number = x)
+        self.button_2.when_released = lambda x = 2: self.push_top_button(button = self.button_2, button_number = x)
+        self.button_3.when_released = lambda x = 3: self.push_top_button(button = self.button_3, button_number = x)
+        self.button_4.when_released = lambda x = 4: self.push_top_button(button = self.button_4, button_number = x)
         self.button_rotary_push.when_released = self.push_mode_button
 
         # trigger action when button is pressed
-        self.button_rotary_CLK.when_pressed = self.increase_volume
-        self.button_rotary_DT.when_pressed = self.decrease_volume
+        self.button_rotary_CLK.when_pressed = self.change_volume
 
         # otherwise, wait
         signal.pause()
@@ -223,7 +223,7 @@ class Box:
         "Decide what to do when a push button is pressed"
 
         if self.mode_current == "player_night":
-            if (button.was_held):
+            if button.was_held:
                 print("button " + str(button_number) + " was held")
                 self.player_music.stop()
                 button.was_held = False
@@ -233,7 +233,7 @@ class Box:
 
     def push_mode_button(self):
         "Change the mode to the next one"
-        if (self.button_rotary_push.was_held):
+        if self.button_rotary_push.was_held:
             print("button mode was held")
             i = self.mode_list.index(self.mode_current)
             i += 1 if i + 1 < len(self.mode_list) else 0
@@ -243,19 +243,16 @@ class Box:
         else:
             self.clock.speak(vol = self.volume_current)
 
-    def increase_volume(self):
-        "Increase volume by one step"
-        if self.button_rotary_CLK.value == 1 and self.button_rotary_DT.value == 0:
-            self.volume_current = min(self.volume_current + self.volume_step, self.volume_max)
-            self.player_music.update_volume(self.volume_current)
-            self.player_system.update_volume(self.volume_current)
-
-    def decrease_volume(self):
-        "Decrease volume by one step"
-        if self.button_rotary_CLK.value == 0 and self.button_rotary_DT.value == 1:
-            self.volume_current = max(self.volume_current - self.volume_step, 0)
-            self.player_music.update_volume(self.volume_current)
-            self.player_system.update_volume(self.volume_current)
+    def change_volume(self):
+        "Change the volume of all players"
+        #print("CLK = " + str(self.button_rotary_CLK.value) + " DT = " + str(self.button_rotary_DT.value))
+        if self.button_rotary_DT.value == 0:
+            add_volume = self.volume_step
+        else:
+            add_volume = - self.volume_step
+        self.volume_current = max(min(self.volume_current + add_volume, self.volume_max), 0)
+        self.player_music.update_volume(vol = self.volume_current)
+        self.player_system.update_volume(vol = self.volume_current, to_print = False)
 
 
 ## RUNNING THE PROGRAM
