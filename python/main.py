@@ -192,9 +192,6 @@ class Box:
         self.button_4.hold_time = hold_time
         self.button_rotary_push.hold_time = hold_time
 
-    def run(self):
-        "Run the box"
-
         # reset holding status anytime a button is held
         self.button_1.when_held = self.held
         self.button_2.when_held = self.held
@@ -203,10 +200,10 @@ class Box:
         self.button_rotary_push.when_held = self.held
 
         # trigger action when button is released
-        self.button_1.when_released = lambda x = 1: self.push_top_button(button = self.button_1, button_number = x)
-        self.button_2.when_released = lambda x = 2: self.push_top_button(button = self.button_2, button_number = x)
-        self.button_3.when_released = lambda x = 3: self.push_top_button(button = self.button_3, button_number = x)
-        self.button_4.when_released = lambda x = 4: self.push_top_button(button = self.button_4, button_number = x)
+        self.button_1.when_released = lambda: self.push_top_button(button = self.button_1, button_number = 1)
+        self.button_2.when_released = lambda: self.push_top_button(button = self.button_2, button_number = 2)
+        self.button_3.when_released = lambda: self.push_top_button(button = self.button_3, button_number = 3)
+        self.button_4.when_released = lambda: self.push_top_button(button = self.button_4, button_number = 4)
         self.button_rotary_push.when_released = self.push_mode_button
 
         # trigger action when button is pressed
@@ -254,12 +251,10 @@ class Box:
 
 ## RUNNING THE PROGRAM
 
-box = Box(gpio_button_1 = 11, gpio_button_2 = 10, gpio_button_3 = 22, gpio_button_4 = 9,
-          gpio_button_rotary_push = 25, gpio_button_rotary_CLK = 7, gpio_button_rotary_DT = 8,
-          path_music_sound = "/home/pi/playlist_night",
-          path_system_sound = "/home/pi/playlist_system",
-          possible_modes = ["player_night"],
-          vol_ini = 20, vol_step = 1, vol_max = 100, vol_startup = 50,
-          hold_time = 1, vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4)
-
-box.run()
+Box(gpio_button_1 = 11, gpio_button_2 = 10, gpio_button_3 = 22, gpio_button_4 = 9,
+    gpio_button_rotary_push = 25, gpio_button_rotary_CLK = 7, gpio_button_rotary_DT = 8,
+    path_music_sound = "/home/pi/playlist_night",
+    path_system_sound = "/home/pi/playlist_system",
+    possible_modes = ["player_night"],
+    vol_ini = 20, vol_step = 1, vol_max = 100, vol_startup = 50,
+    hold_time = 1, vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4)
