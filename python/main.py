@@ -8,85 +8,15 @@ import vlc
 import time
 
 
-class Mode:
-    "Define class which keeps track of the current operating mode and allows for changing it"
-    possible = ["player_night"]
-
-    def __init__(self, i = 0):
-        "Initialize the mode"
-        self.current = self.possible[i]
-
-    def change(self):
-        "Change the mode to the next one"
-        i = self.possible.index(self.current)
-        if i + 1 < len(self.possible):
-            i_next = i + 1
-        else:
-            i_next = 0
-        self.current = self.possible[i_next]
-        volume.reset() # when mode changes, we reset the volume -> good behavior?
-        player.update_volume(volume.get())
-        player.stop() # we stop whatever could have been playing
-        print(self.current)
-
-    def get(self):
-        "Return current mode"
-        return(self.current)
-
-
-class Volume:
-    "Define class which keeps track of the volume and allows for changing it"
-
-    def __init__(self, vol_ini = 30, vol_step = 1, vol_max = 100):
-        "Initialize the volume"
-        self.volume_ini = vol_ini
-        self.volume = vol_ini
-        self.step = vol_step
-        self.max = vol_max
-
-    def increase(self):
-        "Increase volume by one step"
-        if rotary_CLK.value == 1 and rotary_DT.value == 0:
-            if self.volume + self.step < self.max:
-                volume_next = self.volume + self.step
-            else:
-                volume_next = self.max
-            self.volume = volume_next
-            player.update_volume(self.volume)
-            player_system.update_volume(self.volume)
-            print("volume increased to " + str(self.volume))
-
-    def decrease(self):
-        "Decrease volume by one step"
-        if rotary_CLK.value == 0 and rotary_DT.value == 1:
-            if self.volume - self.step > 0:
-                volume_next = self.volume - self.step
-            else:
-                volume_next = 0
-            self.volume = volume_next
-            player.update_volume(self.volume)
-            print("volume decreased to " + str(self.volume))
-
-    def reset(self):
-        "Reset volume to baseline"
-        self.volume = self.volume_ini
-        print("volume rest to " + str(self.volume))
-
-    def get(self):
-        "Return current volume"
-        return(self.volume)
-
-
 class Player:
     "Define class which handles the music (VLC) player"
 
-    def __init__(self, path_music):
+    def __init__(self, path_music, vol):
         "initialize a VLC player"
         instance_vlc = vlc.Instance()
         self.player = instance_vlc.media_player_new()
-        self.player.audio_set_volume(volume.get())
 
-        ## fetching music tracks and adding them to the player
+        # fetching music tracks and adding them to the player
         path_music = os.path.normpath(path_music)
         files_in_path_music = sorted(os.listdir(path_music)) # extract and sort files 
                                                              # (since max # should be < 10,
@@ -102,19 +32,20 @@ class Player:
                                                              # (although only 4 are accessible 
                                                              # via the top push buttons)
 
-    def play(self, track):
-        "Updates the status of the player after a push button has been pressed"
-        track_index = track - 1
-        if self.player.get_media() == None or os.path.basename(
+    def play_music(self, tracknumber, vol):
+        "Play an audio file based on its number (i.e. after a push button has been pressed), and handle pause/resume/stop"
+        track_index = tracknumber - 1
+        if self.player.get_media() is None or os.path.basename(
                 self.player.get_media().get_mrl()) != self.tracks_files[track_index]:
-            # case no track or other track playing 
+            # case no track playing or other track playing 
             # -> we start playing the good track
             self.player.stop()
             self.player.set_media(self.tracks[track_index])
-            self.player.audio_set_volume(volume.get())
+            print("Start playing new track")
             self.player.play()
         else:
             # case correct track already playing -> we pause or resume
+            print("Pause or resume playing track")
             was_playing = self.player.is_playing()
             self.player.pause()
             if not was_playing and not self.player.is_playing():
@@ -123,137 +54,184 @@ class Player:
                 self.player.stop() # in case the same track had previously 
                                    # played till end, it needs to be stopped 
                                    # before playing
-                self.player.audio_set_volume(volume.get())
                 self.player.play()
+        self.update_volume(vol)
 
-    def play_track(self, trackname):
-        "Play specific audio file (for clock and system sound)"
+    def play_sound(self, trackname, vol):
+        "Play an audio file fully (for clock and system sound), no pause/resume/stop possible"
         track_index = self.tracks_files.index(trackname)
         self.player.set_media(self.tracks[track_index])
-        self.player.audio_set_volume(volume.get())
         self.player.play()
+        self.update_volume(vol) # note that volume is not reset after but it should not be a problem
 
-    def update_volume(self, volume):
+    def update_volume(self, vol):
         "Update the volume of the player"
-        self.player.audio_set_volume(volume)
+        print("Update volume to " + str(vol))
+        self.player.audio_set_volume(vol)
 
     def stop(self):
         "Stop the player"
+        print("Stop playing track")
         self.player.stop()
 
 
-## Define actions for push buttons conditionally on the mode
-def action_1():
-    "This is a button-specific wrapper for one of the top push button"
-    if mode.get() == "player_night":
-        if (button_1.was_held):
-            print("button 1 was held")
-            player.stop()
-            button_1.was_held = False
-        else:
-            print("button 1 was pressed")
-            player.play(track = 1)
+class Volume:
+    "Define class which keeps track of the volume"
 
-def action_2():
-    "This is a button-specific wrapper for one of the top push button"
-    if mode.get() == "player_night":
-        if (button_2.was_held):
-            print("button 2 was held")
-            player.stop()
-            button_2.was_held = False
-        else:
-            print("button 2 was pressed")
-            player.play(track = 2)
+    def __init__(self, vol_baseline, vol_step, vol_max):
+        "Initialize the volume"
+        self.volume_baseline = vol_baseline
+        self.current = vol_baseline
+        self.step = vol_step
+        self.max = vol_max
 
-def action_3():
-    "This is a button-specific wrapper for one of the top push button"
-    if mode.get() == "player_night":
-        if (button_3.was_held):
-            print("button 3 was held")
-            player.stop()
-            button_3.was_held = False
-        else:
-            print("button 3 was pressed")
-            player.play(track = 3)
+    def reset(self):
+        "Reset volume to baseline"
+        self.current = self.volume_baseline
+        print("volume rest to " + str(self.current))
 
-def action_4():
-    "This is a button-specific wrapper for one of the top push button"
-    if mode.get() == "player_night":
-        if (button_4.was_held):
-            print("button 4 was held")
-            player.stop()
-            button_4.was_held = False
-        else:
-            print("button 4 was pressed")
-            player.play(track = 4)
 
-def action_mode():
-    "This is a button-specific wrapper for the mode button"
-    if (button_mode.was_held):
-            print("button mode was held")
-            mode.change()
-            button_mode.was_held = False
-    else:
-            clock()
-
-def held(btn):
-    "Check if button has been held or not"
-    #print("button " + str(btn) + " held")
-    btn.was_held = True
-
-def clock():
+class Clock:
     "Read the time out load"
-    hours = time.strftime("%H", time.localtime())
-    minutes = time.strftime("%M", time.localtime())
-    print("It is " + hours + " " + minutes)
-    volume.volume = volume.get() + 3 # hours louder than minutes
-    player_system.play_track(hours + ".mp3")
-    volume.volume = volume.get() - 3 # minutes as loud as baseline
-    time.sleep(0.7)
-    if minutes < "10":
-        player_system.play_track("00.mp3")
-        time.sleep(0.4)
-    player_system.play_track(minutes + ".mp3")
+
+    def __init__(self, volume, player_system, vol_diff_hours = 3,
+                 pause_h_m = 0.7, pause_m_m = 0.4):
+       "Initialize the clock"
+       self.extra_volume_hours = vol_diff_hours
+       self.volume = volume
+       self.player_system = player_system
+       self.pause_h_m = pause_h_m
+       self.pause_m_m = pause_m_m
+
+    def speak(self):
+        hours = time.strftime("%H", time.localtime())
+        minutes = time.strftime("%M", time.localtime())
+        print("It is " + hours + " " + minutes)
+        self.player_system.play_sound(trackname = hours + ".mp3",
+                                          vol = self.volume.current + self.extra_volume_hours)
+        time.sleep(self.pause_h_m)
+        if minutes < "10":
+            self.player_system.play_sound(trackname = "00.mp3",
+                                              vol = self.volume.current)
+            time.sleep(self.pause_m_m)
+        self.player_system.play_sound(minutes + ".mp3", vol = self.volume.current)
 
 
-## Setting the mapping for all physical inputs
-gpiozero.Button.was_held = False
+class Box:
+    "Define class which handle the physical box"
 
-button_1 = gpiozero.Button(11)
-button_2 = gpiozero.Button(10)
-button_3 = gpiozero.Button(22)
-button_4 = gpiozero.Button(9)
-button_mode = gpiozero.Button(25) # push button from rotary encoder
-rotary_CLK = gpiozero.Button(7)
-rotary_DT = gpiozero.Button(8)
+    def __init__(self,
+                 gpio_button_1, gpio_button_2, gpio_button_3, gpio_button_4,
+                 gpio_button_rotary_push, gpio_button_rotary_CLK, gpio_button_rotary_DT,
+                 path_music_sound, path_system_sound,
+                 possible_modes = ["player_night"],
+                 vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50,
+                 hold_time = 1,
+                 vol_diff_hours = 3, pause_h_m = 0.7, pause_m_m = 0.4):
+        "Initialize the box"
+        self.mode_list = possible_modes
+        self.mode_current = possible_modes[0]
+        self.player_system = Player(path_music = path_system_sound, vol = vol_ini)
+        self.player_system.play_sound(trackname = "start.wav", vol = vol_startup)
+        self.player_music = Player(path_music = path_music_sound, vol = vol_ini)
+        self.volume = Volume(vol_baseline = vol_ini, vol_step = vol_step, vol_max = vol_max)
+        self.clock = Clock(volume = self.volume,
+                           player_system = self.player_system,
+                           vol_diff_hours = vol_diff_hours,
+                           pause_h_m = pause_h_m, pause_m_m = pause_m_m)
+        
+        # setting the mapping for all physical inputs
+        gpiozero.Button.was_held = False
+        self.button_1 = gpiozero.Button(gpio_button_1)
+        self.button_2 = gpiozero.Button(gpio_button_2)
+        self.button_3 = gpiozero.Button(gpio_button_3)
+        self.button_4 = gpiozero.Button(gpio_button_4)
+        self.button_rotary_push = gpiozero.Button(gpio_button_rotary_push)
+        self.button_rotary_CLK = gpiozero.Button(gpio_button_rotary_CLK)
+        self.button_rotary_DT = gpiozero.Button(gpio_button_rotary_DT)
+    
+        # setting holding time for push buttons
+        self.button_1.hold_time = hold_time
+        self.button_2.hold_time = hold_time
+        self.button_3.hold_time = hold_time
+        self.button_4.hold_time = hold_time
+        self.button_rotary_push.hold_time = hold_time
 
-## Setting holding time for push buttons
-button_1.hold_time = 1
-button_2.hold_time = 1
-button_3.hold_time = 1
-button_4.hold_time = 1
-button_mode.hold_time = 1
+    def run(self):
+        "Run the box"
 
-## Run program
-volume = Volume()
-mode = Mode()
-player_system = Player(path_music = "/home/pi/playlist_system")
-player_system.play_track("start.wav")
-player = Player(path_music = "/home/pi/playlist_night")
+        # reset holding status anytime a button is held
+        self.button_1.when_held = self.held
+        self.button_2.when_held = self.held
+        self.button_3.when_held = self.held
+        self.button_4.when_held = self.held
+        self.button_rotary_push.when_held = self.held
 
-rotary_CLK.when_pressed = volume.increase
-rotary_DT.when_pressed = volume.decrease
+        # trigger action when button is released
+        self.button_1.when_released = lambda x = 1: self.push_top_button(self.button_1, button_number = x)
+        self.button_2.when_released = lambda x = 2: self.push_top_button(self.button_2, button_number = x)
+        self.button_3.when_released = lambda x = 3: self.push_top_button(self.button_3, button_number = x)
+        self.button_4.when_released = lambda x = 4: self.push_top_button(self.button_4, button_number = x)
+        self.button_rotary_push.when_released = self.push_mode_button
 
-button_1.when_held = held
-button_2.when_held = held
-button_3.when_held = held
-button_4.when_held = held
-button_mode.when_held = held
+        # trigger action when button is pressed
+        self.button_rotary_CLK.when_pressed = self.increase_volume
+        self.button_rotary_DT.when_pressed = self.decrease_volume
 
-button_1.when_released = action_1
-button_2.when_released = action_2
-button_3.when_released = action_3
-button_4.when_released = action_4
-button_mode.when_released = action_mode
+        # otherwise, wait
+        signal.pause()
 
-signal.pause()
+    def held(self, button):
+        "Set holding status"
+        button.was_held = True
+
+    def push_top_button(self, button, button_number):
+        "Decide what to do when a push button is pressed"
+
+        if self.mode_current == "player_night":
+            if (button.was_held):
+                print("button " + str(button_number) + " was held")
+                self.player_music.stop()
+                button.was_held = False
+            else:
+                print("button " + str(button_number) + " was pressed")
+                self.player_music.play_music(tracknumber = button_number, vol = self.volume.current)
+
+    def push_mode_button(self):
+        "Change the mode to the next one"
+        if (self.button_rotary_push.was_held):
+                print("button mode was held")
+                i = self.mode_list.index(self.mode_current)
+                i += 1 if i + 1 < len(self.mode_list) else 0
+                self.mode_current = self.mode_list[i]
+                print(self.mode_current)
+                self.button_rotary_push.was_held = False
+        else:
+                self.clock.speak()
+
+    def increase_volume(self):
+        "Increase volume by one step"
+        if self.button_rotary_CLK.value == 1 and self.button_rotary_DT.value == 0:
+            self.volume.current = min(self.volume.current + self.volume.step, self.volume.max)
+            self.player_music.update_volume(self.volume.current)
+            self.player_system.update_volume(self.volume.current)
+
+    def decrease_volume(self):
+        "Decrease volume by one step"
+        if self.button_rotary_CLK.value == 0 and self.button_rotary_DT.value == 1:
+            self.volume.current = max(self.volume.current - self.volume.step, 0)
+            self.player_music.update_volume(self.volume.current)
+            self.player_system.update_volume(self.volume.current)
+
+
+## RUNNING THE PROGRAM
+
+box = Box(gpio_button_1 = 11, gpio_button_2 = 10, gpio_button_3 = 22, gpio_button_4 = 9,
+          gpio_button_rotary_push = 25, gpio_button_rotary_CLK = 7, gpio_button_rotary_DT = 8,
+          path_music_sound = "/home/pi/playlist_night",
+          path_system_sound = "/home/pi/playlist_system",
+          possible_modes = ["player_night"],
+          vol_ini = 20, vol_step = 1, vol_max = 100, vol_startup = 50,
+          hold_time = 1, vol_diff_hours = 3, pause_h_m = 0.7, pause_m_m = 0.4)
+
+box.run()
