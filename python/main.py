@@ -246,10 +246,7 @@ class Box:
     def change_volume(self):
         "Change the volume of all players"
         #print("CLK = " + str(self.button_rotary_CLK.value) + " DT = " + str(self.button_rotary_DT.value))
-        if self.button_rotary_DT.value == 0:
-            add_volume = self.volume_step
-        else:
-            add_volume = - self.volume_step
+        add_volume = self.volume_step if self.button_rotary_DT.value == 0 else - self.volume_step
         self.volume_current = max(min(self.volume_current + add_volume, self.volume_max), 0)
         self.player_music.update_volume(vol = self.volume_current)
         self.player_system.update_volume(vol = self.volume_current, to_print = False)
