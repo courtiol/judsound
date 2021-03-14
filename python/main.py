@@ -12,7 +12,12 @@ class Player:
     "Define class which handles the music (VLC) player"
 
     def __init__(self, path_music):
-        "initialize a VLC player"
+        """Initialize a VLC player
+
+        Keyword arguments:
+        path_music -- a string specifying the path to the directory where the audio files are stored 
+        """
+
         instance_vlc = vlc.Instance()
         self.player = instance_vlc.media_player_new()
 
@@ -33,7 +38,15 @@ class Player:
                                                              # via the top push buttons)
 
     def play_music(self, tracknumber, vol):
-        "Play an audio file based on its number (i.e. after a push button has been pressed), and handle pause/resume/stop"
+        """Play an audio file based on its number and handle pause/resume/stop
+        
+        This is the function called when a push button has been pressed (in playlist mode).
+
+        Keyword arguments:
+        tracknumber -- an integer specifying the number of the track to play (nb: starts at 1 not 0)
+        vol -- an integer specifying the volume used to play the music
+        """
+
         track_index = tracknumber - 1
         if self.player.get_media() is None or os.path.basename(
                 self.player.get_media().get_mrl()) != self.tracks_files[track_index]:
@@ -58,7 +71,15 @@ class Player:
         self.update_volume(vol)
 
     def play_sound(self, trackname, vol):
-        "Play an audio file fully (for clock and system sound), no pause/resume/stop possible"
+        """Play an audio file fully with no pause/resume/stop possible
+
+        This is the function called to speak the time and produce other system sound
+
+        Keyword arguments:
+        trackname -- a string indicating the file name of the audio file to play
+        vol -- an integer specifying the volume used to play the music
+        """
+
         track_index = self.tracks_files.index(trackname)
         self.player.set_media(self.tracks[track_index])
         self.player.play()
@@ -76,32 +97,61 @@ class Player:
 
 
 class Clock:
-    "Read the time out load"
+    "Define the class which handles the alarm-clock"
 
     def __init__(self, player_system, vol_diff_hours = 3,
-                 pause_h_m = 0.7, pause_m_m = 0.4):
-       "Initialize the clock"
+                 pause_h_m = 0.7, pause_0m_m = 0.4):
+       """Initialize the clock
+
+       Keyword arguments:
+        player_system -- an object of class Player
+        vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
+        pause_h_m -- a float specifying the time in seconds between the reading of the hours and that of the minutes (default = 0.7)
+        pause_0m_m -- a float specifying the time in seconds between the reading of the 0 minute and the single digit minutes (default = 0.4)
+       """
+
        self.extra_volume_hours = vol_diff_hours
        self.player_system = player_system
        self.pause_h_m = pause_h_m
-       self.pause_m_m = pause_m_m
+       self.pause_0m_m = pause_0m_m
 
-    def speak(self, volume):
+    def speak(self, vol):
         hours = time.strftime("%H", time.localtime())
         minutes = time.strftime("%M", time.localtime())
         print("It is " + hours + " " + minutes)
         self.player_system.play_sound(trackname = hours + ".mp3",
-                                          vol = volume + self.extra_volume_hours)
+                                          vol = vol + self.extra_volume_hours)
         time.sleep(self.pause_h_m)
         if minutes < "10":
             self.player_system.play_sound(trackname = "00.mp3",
-                                              vol = volume)
-            time.sleep(self.pause_m_m)
-        self.player_system.play_sound(minutes + ".mp3", vol = volume)
+                                              vol = vol)
+            time.sleep(self.pause_0m_m)
+        self.player_system.play_sound(minutes + ".mp3", vol = vol)
 
 
 class Box:
-    "Define class which handle the physical box"
+    """Define class which handle the physical box
+
+    Keyword arguments:
+    gpio_button_1 -- an integer specifying the GPIO pin number to which the push button 1 is connected
+    gpio_button_2 -- an integer specifying the GPIO pin number to which the push button 2 is connected
+    gpio_button_3 -- an integer specifying the GPIO pin number to which the push button 3 is connected
+    gpio_button_4 -- an integer specifying the GPIO pin number to which the push button 4 is connected
+    gpio_button_rotary_push -- an integer specifying the GPIO pin number to which the push button from the rotary encoder is connected
+    gpio_button_rotary_CLK -- an integer specifying the GPIO pin number to which the CLK output from the rotary encoder is connected
+    gpio_button_rotary_DT -- an integer specifying the GPIO pin number to which the DT output from the rotary encoder is connected
+    path_music_sound -- a string specifying the path to the directory where the audio files for the playlist are stored
+    path_system_sound -- a string specifying the path to the directory where the audio files for clock and system sounds are stored
+    possible_modes -- an array of strings specifying the possible mode for the player (default = ["player_night"])
+    vol_ini -- an integer specifying the baseline volume (default = 30)
+    vol_step -- an integer specifying by how much the volume changes when the rotary encoder clicks once (default = 1)
+    vol_max -- an integer specifying the maximum volume allowed (to protect the speaker; default = 100)
+    vol_startup -- an integer specifying the volume of the startup announcement (default = 50)
+    hold_time -- an integer specifying the duration (in seconds) for which the press of a push button triggers a holding behaviour (default = 1) 
+    vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
+    pause_h_m -- a float specifying the time in seconds between the reading of the hours and that of the minutes (default = 0.7)
+    pause_0m_m -- a float specifying the time in seconds between the reading of the 0 minute and the single digit minutes (default = 0.4)
+    """
 
     def __init__(self,
                  gpio_button_1, gpio_button_2, gpio_button_3, gpio_button_4,
@@ -110,7 +160,7 @@ class Box:
                  possible_modes = ["player_night"],
                  vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50,
                  hold_time = 1,
-                 vol_diff_hours = 3, pause_h_m = 0.7, pause_m_m = 0.4):
+                 vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4):
         "Initialize the box"
         self.mode_list = possible_modes
         self.mode_current = possible_modes[0]
@@ -122,7 +172,7 @@ class Box:
         self.volume_max = vol_max
         self.clock = Clock(player_system = self.player_system,
                            vol_diff_hours = vol_diff_hours,
-                           pause_h_m = pause_h_m, pause_m_m = pause_m_m)
+                           pause_h_m = pause_h_m, pause_0m_m = pause_0m_m)
         
         # setting the mapping for all physical inputs
         gpiozero.Button.was_held = False
@@ -184,14 +234,14 @@ class Box:
     def push_mode_button(self):
         "Change the mode to the next one"
         if (self.button_rotary_push.was_held):
-                print("button mode was held")
-                i = self.mode_list.index(self.mode_current)
-                i += 1 if i + 1 < len(self.mode_list) else 0
-                self.mode_current = self.mode_list[i]
-                print(self.mode_current)
-                self.button_rotary_push.was_held = False
+            print("button mode was held")
+            i = self.mode_list.index(self.mode_current)
+            i += 1 if i + 1 < len(self.mode_list) else 0
+            self.mode_current = self.mode_list[i]
+            print(self.mode_current)
+            self.button_rotary_push.was_held = False
         else:
-                self.clock.speak(volume = self.volume_current)
+            self.clock.speak(vol = self.volume_current)
 
     def increase_volume(self):
         "Increase volume by one step"
@@ -216,6 +266,6 @@ box = Box(gpio_button_1 = 11, gpio_button_2 = 10, gpio_button_3 = 22, gpio_butto
           path_system_sound = "/home/pi/playlist_system",
           possible_modes = ["player_night"],
           vol_ini = 20, vol_step = 1, vol_max = 100, vol_startup = 50,
-          hold_time = 1, vol_diff_hours = 3, pause_h_m = 0.7, pause_m_m = 0.4)
+          hold_time = 1, vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4)
 
 box.run()
