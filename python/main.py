@@ -98,12 +98,13 @@ class Player:
 class Clock:
     "Define the class which handles the alarm-clock"
 
-    def __init__(self, player_system, vol_diff_hours = 3,
+    def __init__(self, player_system, file_to_alarms, vol_diff_hours = 3,
                  pause_h_m = 0.7, pause_0m_m = 0.4):
        """Initialize the clock
 
        Keyword arguments:
         player_system -- an object of class Player
+        file_to_alarms -- a string specifying the file (including its paths) where alarms are written and read
         vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
         pause_h_m -- a float specifying the time in seconds between the reading of the hours and that of the minutes (default = 0.7)
         pause_0m_m -- a float specifying the time in seconds between the reading of the 0 minute and the single digit minutes (default = 0.4)
@@ -111,6 +112,7 @@ class Clock:
 
        self.extra_volume_hours = vol_diff_hours
        self.player_system = player_system
+       self.file_to_alarms = file_to_alarms
        self.pause_h_m = pause_h_m
        self.pause_0m_m = pause_0m_m
        self.alarm = [0, 0, 0, 0]
@@ -120,13 +122,15 @@ class Clock:
         minutes = time.strftime("%M", time.localtime())
         return [hours, minutes]
 
+    def convert_hhmm_to_hm(self, time_to_convert):
+        return [str(time_to_convert[0]) + str(time_to_convert[1]), str(time_to_convert[2]) + str(time_to_convert[3])]
+
     def speak(self, vol, time_to_read = None):
         if time_to_read is None:
             time_to_read = self.time()
             prefix = "It is "
         else:
-            time_to_read = [str(time_to_read[0]) + str(time_to_read[1]),
-                            str(time_to_read[2]) + str(time_to_read[3])]
+            time_to_read = self.convert_hhmm_to_hm(time_to_convert = time_to_read)
             prefix = "Alarm pre-set at "
         hours = time_to_read[0]
         minutes = time_to_read[1]
@@ -159,8 +163,10 @@ class Clock:
             time.sleep(3)
 
     def reset_hard(self):
+        # erase content of file
+        file = open(self.file_to_alarms, "w")
+        file.close()
         self.alarm = [0, 0, 0, 0]
-        None #TODO -> should delete all existing alarm
 
     def check_unregistered_alarm(self, vol):
         self.player_system.play_sound(track_name = "alarm_preset_at.wav", vol = vol)
@@ -169,6 +175,11 @@ class Clock:
         time.sleep(3)
 
     def register_alarm(self, vol):
+        print("saving alarm to file")
+        file = open(self.file_to_alarms, "a")
+        file.writelines(self.convert_hhmm_to_hm(time_to_convert = self.alarm))
+        file.write("\n")
+        file.close()
         self.player_system.play_sound(track_name = "alarm_set_at.wav", vol = vol)
         time.sleep(3)
         self.speak(vol = vol, time_to_read = self.alarm)
@@ -188,6 +199,7 @@ class Box:
     gpio_button_rotary_DT -- an integer specifying the GPIO pin number to which the DT output from the rotary encoder is connected
     path_music_sound -- a string specifying the path to the directory where the audio files for the playlist are stored
     path_system_sound -- a string specifying the path to the directory where the audio files for clock and system sounds are stored
+    file_to_alarms -- a string specifying the file (including its paths) where alarms are written and read
     possible_modes -- an array of strings specifying the possible mode for the player (default = ["player_night"])
     vol_ini -- an integer specifying the baseline volume (default = 30)
     vol_step -- an integer specifying by how much the volume changes when the rotary encoder clicks once (default = 1)
@@ -201,7 +213,7 @@ class Box:
 
     def __init__(self,
                  gpio_push_buttons, gpio_button_rotary_push, gpio_button_rotary_CLK, gpio_button_rotary_DT,
-                 path_music_sound, path_system_sound,
+                 path_music_sound, path_system_sound, file_to_alarms,
                  possible_modes = ["player_night", "alarm"],
                  vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50,
                  hold_time = 1,
@@ -216,6 +228,7 @@ class Box:
         self.volume_step = vol_step
         self.volume_max = vol_max
         self.clock = Clock(player_system = self.player_system,
+                           file_to_alarms = file_to_alarms,
                            vol_diff_hours = vol_diff_hours,
                            pause_h_m = pause_h_m, pause_0m_m = pause_0m_m)
         
@@ -335,6 +348,7 @@ Box(gpio_push_buttons = [11, 10, 22, 9],
     gpio_button_rotary_push = 25, gpio_button_rotary_CLK = 7, gpio_button_rotary_DT = 8,
     path_music_sound = "/home/pi/playlist_night",
     path_system_sound = "/home/pi/playlist_system",
+    file_to_alarms = "/home/pi/judsound_alarms",
     possible_modes = ["player_night", "alarm"],
     vol_ini = 20, vol_step = 1, vol_max = 100, vol_startup = 20,
     hold_time = 1, vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4)
