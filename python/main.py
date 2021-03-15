@@ -162,11 +162,12 @@ class Clock:
             self.player_system.play_sound(track_name = "alarm_not_set.wav", vol = vol)
             time.sleep(3)
 
-    def reset_hard(self):
-        # erase content of file
-        file = open(self.file_to_alarms, "w")
+    def reset_hard(self, vol):
+        self.reset_soft(vol = 0)
+        file = open(self.file_to_alarms, "w") # erase content of file
         file.close()
-        self.alarm = [0, 0, 0, 0]
+        self.player_system.play_sound(track_name = "alarms_deleted.wav", vol = vol)
+        time.sleep(3)
 
     def check_unregistered_alarm(self, vol):
         self.player_system.play_sound(track_name = "alarm_preset_at.wav", vol = vol)
@@ -186,8 +187,19 @@ class Clock:
         time.sleep(3)
 
     def list_alarms(self, vol):
-        None #TODO -> read all registered alarm
-
+        file = open(self.file_to_alarms, "r")
+        alarm_text = file.readlines()
+        alarms = [[alarm_text[i][0], alarm_text[i][1], alarm_text[i][2], alarm_text[i][3]] for i in range(len(alarm_text))]
+        print("alarms read as:", alarm_text)
+        if alarms != []:
+            self.player_system.play_sound(track_name = "alarms_list.wav", vol = vol)
+            time.sleep(2)
+            for alarm in alarms:
+                self.speak(vol = vol, time_to_read = alarm)
+                time.sleep(2)
+        file.close()
+        self.player_system.play_sound(track_name = "alarm_validation.mp3", vol = vol)
+        time.sleep(1)
 
 class Box:
     """Define class which handle the physical box
@@ -306,7 +318,7 @@ class Box:
                     self.clock.list_alarms(vol = self.volume_current)
                 # cancel all alarms
                 if button_index == 3:
-                    self.clock.reset_hard()
+                    self.clock.reset_hard(vol = self.volume_current)
                     self.change_mode(mode = "player_night")
 
     def change_mode(self, mode):
