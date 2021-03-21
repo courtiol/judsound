@@ -153,8 +153,8 @@ class Clock:
 
     def reset_hard(self, vol):
         self.reset_soft(vol = 0)
-        file = open(self.file_to_alarms, "w") # erase content of file
-        file.close()
+        with open(self.file_to_alarms, "w"):
+            pass # does nothing but erase content of file since in write mode
         self.player_system.play_sound(track_name = "alarms_deleted.wav", vol = vol)
         time.sleep(3)
 
@@ -166,10 +166,9 @@ class Clock:
 
     def register_alarm(self, vol):
         print("saving alarm to file")
-        file = open(self.file_to_alarms, "a")
-        file.writelines(self.convert_hhmm_to_hm(time = self.alarm))
-        file.write("\n")
-        file.close()
+        with open(self.file_to_alarms, "a") as file:
+            file.writelines(self.convert_hhmm_to_hm(time = self.alarm))
+            file.write("\n")
         self.player_system.play_sound(track_name = "alarm_set_at.wav", vol = vol)
         time.sleep(3)
         self.speak(vol = vol, time_to_read = self.alarm)
