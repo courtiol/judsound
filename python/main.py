@@ -122,7 +122,8 @@ class Clock:
         minutes = time.strftime("%M", time.localtime())
         return [hours, minutes]
 
-    def convert_hhmm_to_hm(self, time_to_convert):
+    @staticmethod
+    def convert_hhmm_to_hm(time_to_convert):
         return [str(time_to_convert[0]) + str(time_to_convert[1]), str(time_to_convert[2]) + str(time_to_convert[3])]
 
     def speak(self, vol, time_to_read = None):
