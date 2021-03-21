@@ -146,15 +146,8 @@ class Clock:
         self.player_system.play_sound(minutes + ".mp3", vol = vol)
 
     def set_alarm(self, add):
-        self.alarm = [x + y for x, y in zip(self.alarm, add)] # add element per element
-        if self.alarm[0] > 2:
-            self.alarm[0] = 0
-        if self.alarm[1] > 9:
-            self.alarm[1] = 0
-        if self.alarm[2] > 5:
-            self.alarm[2] = 0
-        if self.alarm[3] > 9:
-            self.alarm[3] = 0
+        max_vals = [3, 10, 6, 10] # TODO: constrain max to 23:59, not 29:59
+        self.alarm = [(x + y) % m for x, y, m in zip(self.alarm, add, max_vals)] # add element per element
         print("alarm value updated to " + str(self.alarm))
 
     def reset_soft(self, vol):
