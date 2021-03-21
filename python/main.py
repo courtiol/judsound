@@ -83,9 +83,9 @@ class Player:
         self.player.play()
         self.update_volume(vol) # note that volume is not reset after but it should not be a problem
 
-    def update_volume(self, vol, to_print = True):
+    def update_volume(self, vol, verbose = True):
         "Update the volume of the player"
-        if to_print:
+        if verbose:
             print("Update volume to " + str(vol))
         self.player.audio_set_volume(vol)
 
@@ -346,7 +346,7 @@ class Box:
         add_volume = self.volume_step if self.button_rotary_DT.value == 0 else - self.volume_step
         self.volume_current = max(min(self.volume_current + add_volume, self.volume_max), 0)
         self.player_music.update_volume(vol = self.volume_current)
-        self.player_system.update_volume(vol = self.volume_current, to_print = False)
+        self.player_system.update_volume(vol = self.volume_current, verbose = False)
 
 
 ## RUNNING THE PROGRAM
