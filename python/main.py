@@ -182,7 +182,7 @@ class Clock:
                 digits = [int(digit) for digit in line.strip()]
                 assert len(digits) == 4, f"Size mismatch: { len(digits) } characters instead of 4"
                 alarms.append(digits)
-        if alarms != []:
+        if alarms:
             self.player_system.play_sound(track_name = "alarms_list.wav", vol = vol)
             time.sleep(2)
             for alarm in alarms:
