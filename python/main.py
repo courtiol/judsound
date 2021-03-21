@@ -176,17 +176,18 @@ class Clock:
         time.sleep(3)
 
     def list_alarms(self, vol):
-        file = open(self.file_to_alarms, "r")
-        alarm_text = file.readlines()
-        alarms = [[alarm_text[i][0], alarm_text[i][1], alarm_text[i][2], alarm_text[i][3]] for i in range(len(alarm_text))]
-        print("alarms read as:", alarm_text)
+        with open(self.file_to_alarms, "r") as file:
+            alarms = []
+            for line in file:
+                digits = [int(digit) for digit in line.strip()]
+                assert len(digits) == 4, f"Size mismatch: { len(digits) } characters instead of 4"
+                alarms.append(digits)
         if alarms != []:
             self.player_system.play_sound(track_name = "alarms_list.wav", vol = vol)
             time.sleep(2)
             for alarm in alarms:
                 self.speak(vol = vol, time_to_read = alarm)
                 time.sleep(2)
-        file.close()
         self.player_system.play_sound(track_name = "alarm_validation.mp3", vol = vol)
         time.sleep(1)
 
