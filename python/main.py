@@ -339,6 +339,7 @@ class Box:
             self.clock.reset_soft(vol = 0)
         elif mode not in ["alarm_validation", "player_night"]:
             raise ValueError('Unknown mode: ' + mode)
+        self.player_music.player.stop()
         self.mode_current = mode
         self.player_system.play_sound(track_name = self.tracks_system[mode], vol = self.volume_current)
         print(self.mode_current)
