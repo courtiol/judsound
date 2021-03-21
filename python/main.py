@@ -123,15 +123,15 @@ class Clock:
         return [hours, minutes]
 
     @staticmethod
-    def convert_hhmm_to_hm(time_to_convert):
-        return [str(time_to_convert[0]) + str(time_to_convert[1]), str(time_to_convert[2]) + str(time_to_convert[3])]
+    def convert_hhmm_to_hm(time):
+        return [f"{time[0]}{time[1]}", f"{time[2]}{time[3]}"]
 
     def speak(self, vol, time_to_read = None):
         if time_to_read is None:
             time_to_read = self.time()
             prefix = "It is "
         else:
-            time_to_read = self.convert_hhmm_to_hm(time_to_convert = time_to_read)
+            time_to_read = self.convert_hhmm_to_hm(time = time_to_read)
             prefix = "Alarm pre-set at "
         hours = time_to_read[0]
         minutes = time_to_read[1]
@@ -167,7 +167,7 @@ class Clock:
     def register_alarm(self, vol):
         print("saving alarm to file")
         file = open(self.file_to_alarms, "a")
-        file.writelines(self.convert_hhmm_to_hm(time_to_convert = self.alarm))
+        file.writelines(self.convert_hhmm_to_hm(time = self.alarm))
         file.write("\n")
         file.close()
         self.player_system.play_sound(track_name = "alarm_set_at.wav", vol = vol)
