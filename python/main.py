@@ -53,11 +53,11 @@ class Player:
             # -> we start playing the good track
             self.player.stop()
             self.player.set_media(self.tracks[track_index])
-            print("Start playing new track")
+            print("start playing new track")
             self.player.play()
         else:
             # case correct track already playing -> we pause or resume
-            print("Pause or resume playing track")
+            print("pause or resume playing track")
             was_playing = self.player.is_playing()
             self.player.pause()
             if not was_playing and not self.player.is_playing():
@@ -86,12 +86,12 @@ class Player:
     def update_volume(self, vol, verbose = True):
         "Update the volume of the player"
         if verbose:
-            print("Update volume to " + str(vol))
+            print("update volume to " + str(vol))
         self.player.audio_set_volume(vol)
 
     def stop(self):
         "Stop the player"
-        print("Stop playing track")
+        print("stop playing track")
         self.player.stop()
 
 
@@ -130,13 +130,15 @@ class Clock:
     def speak(self, vol, time_to_read = None):
         if time_to_read is None:
             time_to_read = self.time()
-            prefix = "It is "
+            prefix = "tell current time"
         else:
             time_to_read = self.convert_hhmm_to_hm(time = time_to_read)
-            prefix = "Alarm pre-set at "
+            prefix = "tell alarm pre-set"
         hours = time_to_read[0]
         minutes = time_to_read[1]
-        print(prefix + hours + " " + minutes)
+
+        print(f"{prefix} ({hours}:{minutes})")
+        
         self.player_system.play_sound(track_name = hours + ".mp3",
                                       vol = vol + self.extra_volume_hours)
         time.sleep(self.pause_h_m)
@@ -196,15 +198,16 @@ class Clock:
         time.sleep(1)
 
     def ring_alarm(self, vol, update = True):
-        print("time being checked and compared to alarm(s)")
         if update:
             self.read_alarms()
         now = self.time()
+        print(f"checking if an alarm is set for current time ({now[0]}:{now[1]})")
         for alarm in self.alarms:
             target = self.convert_hhmm_to_hm(alarm)
             if target == now:
                 print("ALARM RINGING!")
                 self.player_system.play_sound(track_name = "start.wav", vol = vol)
+
 
 class Box:
     """Define class which handle the physical box
