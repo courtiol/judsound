@@ -145,11 +145,6 @@ class Clock:
             time.sleep(self.pause_0m_m)
         self.player_system.play_sound(minutes + ".mp3", vol = vol)
 
-    def set_alarm(self, add):
-        max_vals = [3, 10, 6, 10] # TODO: constrain max to 23:59, not 29:59
-        self.alarm = [(x + y) % m for x, y, m in zip(self.alarm, add, max_vals)] # add element per element
-        print("alarm value updated to " + str(self.alarm))
-
     def reset_soft(self, vol):
         self.alarm = [0, 0, 0, 0]
         if vol > 0:
@@ -291,14 +286,9 @@ class Box:
                 self.change_mode(mode = "alarm_validation")
                 btn.was_held = False
             else:
-                if button_index == 0:
-                    self.clock.set_alarm(add = [1, 0, 0, 0])
-                elif button_index == 1:
-                    self.clock.set_alarm(add = [0, 1, 0, 0])
-                elif button_index == 2:
-                    self.clock.set_alarm(add = [0, 0, 1, 0])
-                elif button_index == 3:
-                    self.clock.set_alarm(add = [0, 0, 0, 1])
+                self.clock.alarm[button_index] = (self.clock.alarm[button_index] + 1) % [3, 10, 6, 10][button_index]
+                # TODO: constrain max to 23:59, not 29:59
+                print("alarm value updated to " + str(self.clock.alarm))
         elif self.mode_current == "alarm_validation":
             if btn.was_held:
                 # register and quit
