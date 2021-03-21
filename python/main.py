@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import gpiozero
-import signal
+#import signal # no longer needed since loop for alarm
 import os
 import re
 import vlc
@@ -115,7 +115,8 @@ class Clock:
        self.file_to_alarms = file_to_alarms
        self.pause_h_m = pause_h_m
        self.pause_0m_m = pause_0m_m
-       self.alarm = [0, 0, 0, 0]
+       self.alarm = [0, 0, 0, 0] # a given alarm being set
+       self.alarms = [] # the list of alarms
 
     def time(self):
         hours = time.strftime("%H", time.localtime())
@@ -149,7 +150,7 @@ class Clock:
         self.alarm = [0, 0, 0, 0]
         if vol > 0:
             self.player_system.play_sound(track_name = "alarm_not_set.wav", vol = vol)
-            time.sleep(3)
+            time.sleep(2)
 
     def reset_hard(self, vol):
         self.reset_soft(vol = 0)
@@ -160,9 +161,9 @@ class Clock:
 
     def check_unregistered_alarm(self, vol):
         self.player_system.play_sound(track_name = "alarm_preset_at.wav", vol = vol)
-        time.sleep(3)
+        time.sleep(2)
         self.speak(vol = vol, time_to_read = self.alarm)
-        time.sleep(3)
+        time.sleep(1)
 
     def register_alarm(self, vol):
         print("saving alarm to file")
@@ -170,25 +171,40 @@ class Clock:
             file.writelines(self.convert_hhmm_to_hm(time = self.alarm))
             file.write("\n")
         self.player_system.play_sound(track_name = "alarm_set_at.wav", vol = vol)
-        time.sleep(3)
+        time.sleep(2)
         self.speak(vol = vol, time_to_read = self.alarm)
-        time.sleep(3)
+        time.sleep(1)
 
-    def list_alarms(self, vol):
+    def read_alarms(self):
         with open(self.file_to_alarms, "r") as file:
-            alarms = []
+            self.alarms = []
             for line in file:
                 digits = [int(digit) for digit in line.strip()]
                 assert len(digits) == 4, f"Size mismatch: { len(digits) } characters instead of 4"
-                alarms.append(digits)
-        if alarms:
+                self.alarms.append(digits)
+
+    def list_alarms(self, vol, update = True):
+        if update:
+            self.read_alarms()
+        if self.alarms:
             self.player_system.play_sound(track_name = "alarms_list.wav", vol = vol)
             time.sleep(2)
-            for alarm in alarms:
+            for alarm in self.alarms:
                 self.speak(vol = vol, time_to_read = alarm)
                 time.sleep(2)
         self.player_system.play_sound(track_name = "alarm_validation.mp3", vol = vol)
         time.sleep(1)
+
+    def ring_alarm(self, vol, update = True):
+        print("time being checked and compared to alarm(s)")
+        if update:
+            self.read_alarms()
+        now = self.time()
+        for alarm in self.alarms:
+            target = self.convert_hhmm_to_hm(alarm)
+            if target == now:
+                print("ALARM RINGING!")
+                self.player_system.play_sound(track_name = "start.wav", vol = vol)
 
 class Box:
     """Define class which handle the physical box
@@ -206,6 +222,7 @@ class Box:
     vol_step -- an integer specifying by how much the volume changes when the rotary encoder clicks once (default = 1)
     vol_max -- an integer specifying the maximum volume allowed (to protect the speaker; default = 100)
     vol_startup -- an integer specifying the volume of the startup announcement (default = 50)
+    vol_alarm -- an integer specifying the volume of the alarm (default = 50)
     hold_time -- an integer specifying the duration (in seconds) for which the press of a push button triggers a holding behaviour (default = 1) 
     vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
     pause_h_m -- a float specifying the time in seconds between the reading of the hours and that of the minutes (default = 0.7)
@@ -216,7 +233,7 @@ class Box:
                  gpio_push_buttons, gpio_button_rotary_push, gpio_button_rotary_CLK, gpio_button_rotary_DT,
                  path_music_sound, path_system_sound, file_to_alarms,
                  possible_modes = ["player_night", "alarm"],
-                 vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50,
+                 vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
                  hold_time = 1,
                  vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4):
         "Initialize the box"
@@ -260,8 +277,13 @@ class Box:
             # note: i = btn_index is required for lambda to work using the right scope (specific to using for loops)
             # (i.e. don't pass argument(s) directly to push_top_button call)
 
+        # alarm
+        while(True):
+            self.clock.ring_alarm(vol = 50)
+            time.sleep(60)
+        
         # wait until user action
-        signal.pause()
+        #signal.pause() # no longer needed since loop for alarm
 
     @staticmethod
     def held(button):
@@ -349,5 +371,5 @@ Box(gpio_push_buttons = [11, 10, 22, 9],
     path_system_sound = "/home/pi/playlist_system",
     file_to_alarms = "/home/pi/judsound_alarms",
     possible_modes = ["player_night", "alarm"],
-    vol_ini = 20, vol_step = 1, vol_max = 100, vol_startup = 20,
+    vol_ini = 20, vol_step = 1, vol_max = 100, vol_startup = 20, vol_alarm = 50,
     hold_time = 1, vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4)
