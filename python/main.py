@@ -269,7 +269,8 @@ class Box:
         # wait until user action
         signal.pause()
 
-    def held(self, button):
+    @staticmethod
+    def held(button):
         "Set holding status"
         button.was_held = True
 
