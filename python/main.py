@@ -228,7 +228,13 @@ class Box:
         self.mode_list = possible_modes
         self.mode_current = possible_modes[0]
         self.player_system = Player(path_music = path_system_sound)
-        self.player_system.play_sound(track_name = "start.wav", vol = vol_startup)
+        self.tracks_system = {
+            "start": "start.wav",
+            "alarm": "alarm_mode.wav",
+            "alarm_validation": "alarm_validation.mp3",
+            "player_night": "player_night_mode.wav",
+        }
+        self.player_system.play_sound(track_name = self.tracks_system["start"], vol = vol_startup)
         self.player_music = Player(path_music = path_music_sound)
         self.volume_current = vol_ini
         self.volume_step = vol_step
@@ -318,15 +324,11 @@ class Box:
 
     def change_mode(self, mode):
         if mode == "alarm":
-            self.mode_current = "alarm"
             self.clock.reset_soft(vol = 0)
-            self.player_system.play_sound(track_name = "alarm_mode.wav", vol = self.volume_current)
-        elif mode == "alarm_validation":
-            self.mode_current = "alarm_validation"
-            self.player_system.play_sound(track_name = "alarm_validation.mp3", vol = self.volume_current)
-        elif mode == "player_night":
-            self.mode_current = "player_night"
-            self.player_system.play_sound(track_name = "player_night_mode.wav", vol = self.volume_current)
+        elif mode not in ["alarm_validation", "player_night"]:
+            raise ValueError('Unknown mode: ' + mode)
+        self.mode_current = mode
+        self.player_system.play_sound(track_name = self.tracks_system[mode], vol = self.volume_current)
         print(self.mode_current)
 
     def push_mode_button(self):
