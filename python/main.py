@@ -11,7 +11,7 @@ import time
 class Player:
     "Define class which handles the music (VLC) player"
 
-    def __init__(self, path_music, tracks_dictionary = {}):
+    def __init__(self, path_music, tracks_dictionary = None):
         """Initialize a VLC player
 
         Keyword arguments:
