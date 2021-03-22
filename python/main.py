@@ -393,6 +393,8 @@ class Box:
         while self.button_rotary_push.is_pressed:
             if self.button_rotary_push.active_time > self.hold_time:
                 print(f"button mode was active for more than {self.hold_time} sec")
+                if self.mode_current == "alarm_validation": # as this is a submode, it has no index
+                    self.mode_current = "alarm"
                 i = self.mode_list.index(self.mode_current)
                 i = i + 1 if i + 1 < len(self.mode_list) else 0
                 self.change_mode(mode=self.mode_list[i])
