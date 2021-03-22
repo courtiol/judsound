@@ -283,16 +283,13 @@ class Box:
         self.button_rotary_DT = gpiozero.Button(gpio_button_rotary_DT)
     
         # adjust settings for the rotary encoder
-        self.button_rotary_push.hold_time = hold_time
-        self.button_rotary_push.when_held = self.held
-        self.button_rotary_push.when_released = self.push_mode_button
+        self.button_rotary_push.when_pressed = self.push_mode_button
         self.button_rotary_CLK.when_pressed = self.change_volume
 
         # adjust settings for the push buttons
+        self.hold_time = hold_time
         for btn_index, btn in enumerate(self.push_buttons):
-            btn.hold_time = hold_time
-            btn.when_held = self.held
-            btn.when_released = lambda i = btn_index: self.push_top_button(button_index=i) 
+            btn.when_pressed = lambda i = btn_index: self.push_top_button(button_index=i) 
             # note: i = btn_index is required for lambda to work using the right scope (specific to using for loops)
             # (i.e. don't pass argument(s) directly to push_top_button call)
 
@@ -304,54 +301,50 @@ class Box:
         # wait until user action
         #signal.pause() # no longer needed since loop for alarm
 
-    @staticmethod
-    def held(button):
-        "Set holding status"
-        button.was_held = True
-
     def push_top_button(self, button_index):
         "Decide what to do when a push button is pressed"
 
         btn = self.push_buttons[button_index]
         if self.mode_current == "player_night":
-            if btn.was_held:
-                print("button "+str(button_index)+" was held")
-                self.player_music.stop()
-                btn.was_held = False
-            else:
-                print("button "+str(button_index)+" was pressed")
-                self.player_music.play_music(track_index=button_index, vol=self.volume_current)
+            while btn.is_pressed:
+                if btn.active_time > self.hold_time:
+                    print("button "+str(button_index)+" was held")
+                    self.player_music.stop()
+                    return
+            print("button "+str(button_index)+" was pressed")
+            self.player_music.play_music(track_index=button_index, vol=self.volume_current)
+
         elif self.mode_current == "alarm":
-            if btn.was_held:
-                self.clock.check_unregistered_alarm(vol=self.volume_current)
-                self.change_mode(mode="alarm_validation")
-                btn.was_held = False
-            else:
-                self.clock.alarm[button_index] = (self.clock.alarm[button_index] + 1) % [3, 10, 6, 10][button_index]
-                # TODO: constrain max to 23:59, not 29:59
-                print("alarm value updated to " + str(self.clock.alarm))
+            while btn.is_pressed:
+                if btn.active_time > self.hold_time:
+                    self.clock.check_unregistered_alarm(vol=self.volume_current)
+                    self.change_mode(mode="alarm_validation")
+                    return
+            self.clock.alarm[button_index] = (self.clock.alarm[button_index] + 1) % [3, 10, 6, 10][button_index]
+            # TODO: constrain max to 23:59, not 29:59
+            print("alarm value updated to " + str(self.clock.alarm))
         elif self.mode_current == "alarm_validation":
-            if btn.was_held:
-                # register and quit
-                self.clock.register_alarm(vol=self.volume_current)
+            while btn.is_pressed:
+                if btn.active_time > self.hold_time:
+                    # register and quit
+                    self.clock.register_alarm(vol=self.volume_current)
+                    self.change_mode(mode="player_night")
+                    return
+            # cancel and return to player
+            if button_index == 0:
+                self.clock.reset_soft(vol=self.volume_current)
                 self.change_mode(mode="player_night")
-                btn.was_held = False
-            else:
-                # cancel and return to player
-                if button_index == 0:
-                    self.clock.reset_soft(vol=self.volume_current)
-                    self.change_mode(mode="player_night")
-                # return to preset
-                if button_index == 1:
-                    self.clock.reset_soft(vol=self.volume_current)
-                    self.change_mode(mode="alarm")
-                # list all alarms
-                if button_index == 2:
-                    self.clock.list_alarms(vol=self.volume_current)
-                # cancel all alarms
-                if button_index == 3:
-                    self.clock.reset_hard(vol=self.volume_current)
-                    self.change_mode(mode="player_night")
+            # return to preset
+            if button_index == 1:
+                self.clock.reset_soft(vol=self.volume_current)
+                self.change_mode(mode="alarm")
+            # list all alarms
+            if button_index == 2:
+                self.clock.list_alarms(vol=self.volume_current)
+            # cancel all alarms
+            if button_index == 3:
+                self.clock.reset_hard(vol=self.volume_current)
+                self.change_mode(mode="player_night")
 
     def change_mode(self, mode):
         if mode == "alarm":
@@ -365,14 +358,14 @@ class Box:
 
     def push_mode_button(self):
         "Change the mode to the next one"
-        if self.button_rotary_push.was_held:
-            print("button mode was held")
-            i = self.mode_list.index(self.mode_current)
-            i = i + 1 if i + 1 < len(self.mode_list) else 0
-            self.change_mode(mode=self.mode_list[i])
-            self.button_rotary_push.was_held = False
-        else:
-            self.clock.speak(vol = self.volume_current)
+        while self.button_rotary_push.is_pressed:
+            if self.button_rotary_push.active_time > self.hold_time:
+                print("button mode was active for more than 1 sec")
+                i = self.mode_list.index(self.mode_current)
+                i = i + 1 if i + 1 < len(self.mode_list) else 0
+                self.change_mode(mode=self.mode_list[i])
+                return
+        self.clock.speak(vol = self.volume_current)
 
     def change_volume(self):
         "Change the volume of all players"
