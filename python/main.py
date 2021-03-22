@@ -15,13 +15,13 @@ judsound_box.Box(gpio_push_buttons=[11, 10, 22, 9],
     tracks_system = {# welcome sound
                      "start": "start.wav",
                      # changing mode
-                     "alarm": "alarm_mode.wav",
-                     "alarm_validation": "alarm_validation.mp3",
+                     "alarm": "alarm_mode.mp3",
                      "player_night": "player_night_mode.wav",
                      # setting alarm
                      "alarm_preset_at":"alarm_preset_at.wav",
                      "alarm_set_at":"alarm_set_at.wav",
                      "alarm_not_set": "alarm_not_set.wav",
-                     "alarm_validation3": "alarm_validation.mp3",
+                     "alarm_setting": "alarm_setting.mp3",
+                     "alarm_validation": "alarm_validation.mp3",
                      "alarms_list": "alarms_list.wav",
                      "alarms_deleted":"alarms_deleted.wav"})

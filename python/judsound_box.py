@@ -40,12 +40,12 @@ class Box:
                  tracks_system = {
                     "start": None,
                     "alarm": None,
-                    "alarm_validation": None,
                     "player_night": None,
                     "alarm_preset_at": None,
                     "alarm_set_at": None,
                     "alarm_not_set": None,
-                    "alarm_validation3": None,
+                    "alarm_setting": None,
+                    "alarm_validation": None,
                     "alarms_list": None,
                     "alarms_deleted": None}):
         "Initialize the box"
@@ -117,43 +117,55 @@ class Box:
             self.player_music.play_music(track_index=button_index, vol=self.volume_current)
 
         elif self.mode_current == "alarm":
+            # go to alarm setting
+            if button_index == 0:
+                self.clock.reset_soft(vol=0)
+                self.change_mode(mode="alarm_setting")
+            # list all alarms
+            elif button_index == 1:
+                self.clock.list_alarms(vol=self.volume_current)
+                self.change_mode(mode="alarm")
+            # delete all alarms
+            elif button_index == 2:
+                self.clock.reset_hard(vol=self.volume_current)
+                self.change_mode(mode="alarm")
+            # quit
+            elif button_index == 3:
+                self.change_mode(mode="player_night")
+
+        elif self.mode_current == "alarm_setting":
             while btn.is_pressed:
                 if btn.active_time > self.hold_time:
                     if self.clock.check_unregistered_alarm(vol=self.volume_current):
                         self.change_mode(mode="alarm_validation")
                     else:
-                        self.change_mode(mode="alarm")
+                        self.change_mode(mode="alarm_setting")
                     return
             self.clock.alarm[button_index] = (self.clock.alarm[button_index] + 1) % [3, 10, 6, 10][button_index]
             # TODO: constrain max to 23:59, not 29:59
             print(f"alarm value updated to {self.clock.alarm}")
+
         elif self.mode_current == "alarm_validation":
-            while btn.is_pressed:
-                if btn.active_time > self.hold_time:
-                    # register and quit
-                    self.clock.register_alarm(vol=self.volume_current)
-                    self.change_mode(mode="player_night")
-                    return
-            # cancel and return to player
+            # validate
             if button_index == 0:
-                self.clock.reset_soft(vol=self.volume_current)
+                self.clock.register_alarm(vol=self.volume_current)
                 self.change_mode(mode="player_night")
-            # return to preset
-            if button_index == 1:
+            # redo
+            elif button_index == 1:
                 self.clock.reset_soft(vol=self.volume_current)
-                self.change_mode(mode="alarm")
-            # list all alarms
-            if button_index == 2:
-                self.clock.list_alarms(vol=self.volume_current)
-            # cancel all alarms
-            if button_index == 3:
-                self.clock.reset_hard(vol=self.volume_current)
-                self.change_mode(mode="player_night")
+                self.change_mode(mode="alarm_setting")
+            # listen again
+            elif button_index == 2:
+                self.clock.speak(vol=self.volume_current, time_to_read=self.clock.alarm)
+                self.change_mode(mode="alarm_validation")
+            # quit
+            elif button_index == 3:
+                self.change_mode(mode="player_night")    
 
     def change_mode(self, mode):
         if mode == "alarm":
             self.clock.reset_soft(vol=0)
-        elif mode not in ["alarm_validation", "player_night"]:
+        elif mode not in ["alarm_validation", "alarm_setting", "player_night"]:
             raise ValueError('Unknown mode: '+mode)
         self.player_music.player.stop()
         self.mode_current = mode
@@ -167,7 +179,7 @@ class Box:
         while self.button_rotary_push.is_pressed:
             if self.button_rotary_push.active_time > self.hold_time:
                 print(f"button mode was active for more than {self.hold_time} sec")
-                if self.mode_current == "alarm_validation": # as this is a submode, it has no index
+                if self.mode_current.startswith("alarm_"): # as alarm submodes have no index
                     self.mode_current = "alarm"
                 i = self.mode_list.index(self.mode_current)
                 i = i + 1 if i + 1 < len(self.mode_list) else 0
