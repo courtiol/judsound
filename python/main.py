@@ -140,7 +140,30 @@ class Clock:
     def convert_hhmm_to_hm(time):
         return [f"{time[0]}{time[1]}", f"{time[2]}{time[3]}"]
 
+    def read_alarms(self):
+        "Read the alarms from the text file"
+        with open(self.file_to_alarms, "r") as file:
+            self.alarms = []
+            for line in file:
+                digits = [int(digit) for digit in line.strip()]
+                assert len(digits) == 4, f"Size mismatch: { len(digits) } characters instead of 4"
+                self.alarms.append(digits)
+
+    def write_alarms(self):
+        "Write the alarms into the text file"
+        with open(self.file_to_alarms, "w") as file:
+            for alarm in self.alarms:
+                file.writelines(self.convert_hhmm_to_hm(time=alarm))
+                file.write("\n")
+            file.truncate()
+
+    def delete_alarms(self):
+        "Delete all alarms from the text file"
+        with open(self.file_to_alarms, "w"):
+            pass # does nothing but erase content of file since in write mode
+
     def speak(self, vol, time_to_read = None):
+        "Tell either current time or alarm time"
         if time_to_read is None:
             time_to_read = self.time()
             prefix = "tell current time"
@@ -160,35 +183,33 @@ class Clock:
         self.player_system.play_sound(track_name=minutes, vol=vol)
 
     def reset_soft(self, vol):
+        "Reset alarm currently being prepared"
         self.alarm = [0, 0, 0, 0]
         if vol > 0:
             self.player_system.play_sound(track_name="alarm_not_set", vol=vol)
 
     def reset_hard(self, vol):
+        "Reset all alarms"
         self.reset_soft(vol = 0)
-        with open(self.file_to_alarms, "w"):
-            pass # does nothing but erase content of file since in write mode
+        self.delete_alarms()
         self.player_system.play_sound(track_name="alarms_deleted", vol=vol, wait_till_completion=False)
 
     def check_unregistered_alarm(self, vol):
+        "Check if the alarm has been preset properly (return False if not)"
+        if self.alarm[0] == 2 and self.alarm[1] > 3: # handle error in input
+            self.player_system.play_sound(track_name="alarm_not_set", vol=vol)
+            return False
         self.player_system.play_sound(track_name="alarm_preset_at", vol=vol)
         self.speak(vol=vol, time_to_read=self.alarm)
+        return True
 
     def register_alarm(self, vol):
         print("saving alarm to file")
-        with open(self.file_to_alarms, "a") as file:
-            file.writelines(self.convert_hhmm_to_hm(time=self.alarm))
-            file.write("\n")
+        if self.alarm not in self.alarms: # prevent duplicates
+            self.alarms.append(self.alarm) # add alarm to in-memory list
+        self.write_alarms() # update text file
         self.player_system.play_sound(track_name="alarm_set_at", vol=vol)
         self.speak(vol=vol, time_to_read=self.alarm)
-
-    def read_alarms(self):
-        with open(self.file_to_alarms, "r") as file:
-            self.alarms = []
-            for line in file:
-                digits = [int(digit) for digit in line.strip()]
-                assert len(digits) == 4, f"Size mismatch: { len(digits) } characters instead of 4"
-                self.alarms.append(digits)
 
     def list_alarms(self, vol, update = True):
         if update:
@@ -204,11 +225,16 @@ class Clock:
             self.read_alarms()
         now = self.time()
         #print(f"checking if an alarm is set for current time ({now[0]}:{now[1]})")
+        new_alarms = []
         for alarm in self.alarms:
             target = self.convert_hhmm_to_hm(alarm)
             if target == now:
                 print("ALARM RINGING!")
                 self.player_system.play_sound(track_name="start", vol=vol)
+            else:
+                new_alarms.append(alarm) # only keep alarms that did not trigger (used alarms are discarded)
+        self.alarms = new_alarms # update in memory alarms
+        self.write_alarms() # update text file
 
 
 class Box:
@@ -319,8 +345,10 @@ class Box:
         elif self.mode_current == "alarm":
             while btn.is_pressed:
                 if btn.active_time > self.hold_time:
-                    self.clock.check_unregistered_alarm(vol=self.volume_current)
-                    self.change_mode(mode="alarm_validation")
+                    if self.clock.check_unregistered_alarm(vol=self.volume_current):
+                        self.change_mode(mode="alarm_validation")
+                    else:
+                        self.change_mode(mode="alarm")
                     return
             self.clock.alarm[button_index] = (self.clock.alarm[button_index] + 1) % [3, 10, 6, 10][button_index]
             # TODO: constrain max to 23:59, not 29:59
