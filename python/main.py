@@ -132,49 +132,48 @@ class Clock:
             time_to_read = self.time()
             prefix = "tell current time"
         else:
-            time_to_read = self.convert_hhmm_to_hm(time = time_to_read)
+            time_to_read = self.convert_hhmm_to_hm(time=time_to_read)
             prefix = "tell alarm pre-set"
         hours = time_to_read[0]
         minutes = time_to_read[1]
 
         print(f"{prefix} ({hours}:{minutes})")
         
-        self.player_system.play_sound(track_name = hours + ".mp3",
-                                      vol = vol + self.extra_volume_hours)
+        self.player_system.play_sound(track_name=hours+".mp3",
+                                      vol=vol+self.extra_volume_hours)
         time.sleep(self.pause_h_m)
         if minutes < "10":
-            self.player_system.play_sound(track_name = "00.mp3",
-                                          vol = vol)
+            self.player_system.play_sound(track_name="00.mp3", vol=vol)
             time.sleep(self.pause_0m_m)
-        self.player_system.play_sound(minutes + ".mp3", vol = vol)
+        self.player_system.play_sound(track_name=minutes+".mp3", vol=vol)
 
     def reset_soft(self, vol):
         self.alarm = [0, 0, 0, 0]
         if vol > 0:
-            self.player_system.play_sound(track_name = "alarm_not_set.wav", vol = vol)
+            self.player_system.play_sound(track_name="alarm_not_set.wav", vol=vol)
             time.sleep(2)
 
     def reset_hard(self, vol):
         self.reset_soft(vol = 0)
         with open(self.file_to_alarms, "w"):
             pass # does nothing but erase content of file since in write mode
-        self.player_system.play_sound(track_name = "alarms_deleted.wav", vol = vol)
+        self.player_system.play_sound(track_name="alarms_deleted.wav", vol=vol)
         time.sleep(3)
 
     def check_unregistered_alarm(self, vol):
-        self.player_system.play_sound(track_name = "alarm_preset_at.wav", vol = vol)
+        self.player_system.play_sound(track_name="alarm_preset_at.wav", vol=vol)
         time.sleep(2)
-        self.speak(vol = vol, time_to_read = self.alarm)
+        self.speak(vol=vol, time_to_read=self.alarm)
         time.sleep(1)
 
     def register_alarm(self, vol):
         print("saving alarm to file")
         with open(self.file_to_alarms, "a") as file:
-            file.writelines(self.convert_hhmm_to_hm(time = self.alarm))
+            file.writelines(self.convert_hhmm_to_hm(time=self.alarm))
             file.write("\n")
-        self.player_system.play_sound(track_name = "alarm_set_at.wav", vol = vol)
+        self.player_system.play_sound(track_name="alarm_set_at.wav", vol=vol)
         time.sleep(2)
-        self.speak(vol = vol, time_to_read = self.alarm)
+        self.speak(vol=vol, time_to_read=self.alarm)
         time.sleep(1)
 
     def read_alarms(self):
@@ -189,12 +188,12 @@ class Clock:
         if update:
             self.read_alarms()
         if self.alarms:
-            self.player_system.play_sound(track_name = "alarms_list.wav", vol = vol)
+            self.player_system.play_sound(track_name="alarms_list.wav", vol=vol)
             time.sleep(2)
             for alarm in self.alarms:
-                self.speak(vol = vol, time_to_read = alarm)
+                self.speak(vol = vol, time_to_read=alarm)
                 time.sleep(2)
-        self.player_system.play_sound(track_name = "alarm_validation.mp3", vol = vol)
+        self.player_system.play_sound(track_name="alarm_validation.mp3", vol=vol)
         time.sleep(1)
 
     def ring_alarm(self, vol, update = True):
@@ -206,7 +205,7 @@ class Clock:
             target = self.convert_hhmm_to_hm(alarm)
             if target == now:
                 print("ALARM RINGING!")
-                self.player_system.play_sound(track_name = "start.wav", vol = vol)
+                self.player_system.play_sound(track_name="start.wav", vol=vol)
 
 
 class Box:
@@ -242,22 +241,22 @@ class Box:
         "Initialize the box"
         self.mode_list = possible_modes
         self.mode_current = possible_modes[0]
-        self.player_system = Player(path_music = path_system_sound)
+        self.player_system = Player(path_music=path_system_sound)
         self.tracks_system = {
             "start": "start.wav",
             "alarm": "alarm_mode.wav",
             "alarm_validation": "alarm_validation.mp3",
             "player_night": "player_night_mode.wav",
         }
-        self.player_system.play_sound(track_name = self.tracks_system["start"], vol = vol_startup)
-        self.player_music = Player(path_music = path_music_sound)
+        self.player_system.play_sound(track_name=self.tracks_system["start"], vol=vol_startup)
+        self.player_music = Player(path_music=path_music_sound)
         self.volume_current = vol_ini
         self.volume_step = vol_step
         self.volume_max = vol_max
-        self.clock = Clock(player_system = self.player_system,
-                           file_to_alarms = file_to_alarms,
-                           vol_diff_hours = vol_diff_hours,
-                           pause_h_m = pause_h_m, pause_0m_m = pause_0m_m)
+        self.clock = Clock(player_system=self.player_system,
+                           file_to_alarms=file_to_alarms,
+                           vol_diff_hours=vol_diff_hours,
+                           pause_h_m=pause_h_m, pause_0m_m=pause_0m_m)
         
         # setting the mapping for all physical inputs
         gpiozero.Button.was_held = False
@@ -276,13 +275,13 @@ class Box:
         for btn_index, btn in enumerate(self.push_buttons):
             btn.hold_time = hold_time
             btn.when_held = self.held
-            btn.when_released = lambda i = btn_index: self.push_top_button(button_index = i) 
+            btn.when_released = lambda i = btn_index: self.push_top_button(button_index=i) 
             # note: i = btn_index is required for lambda to work using the right scope (specific to using for loops)
             # (i.e. don't pass argument(s) directly to push_top_button call)
 
         # alarm
         while(True):
-            self.clock.ring_alarm(vol = 50)
+            self.clock.ring_alarm(vol=vol_alarm)
             time.sleep(60)
         
         # wait until user action
@@ -299,16 +298,16 @@ class Box:
         btn = self.push_buttons[button_index]
         if self.mode_current == "player_night":
             if btn.was_held:
-                print("button " + str(button_index) + " was held")
+                print("button "+str(button_index)+" was held")
                 self.player_music.stop()
                 btn.was_held = False
             else:
-                print("button " + str(button_index) + " was pressed")
-                self.player_music.play_music(track_index = button_index, vol = self.volume_current)
+                print("button "+str(button_index)+" was pressed")
+                self.player_music.play_music(track_index=button_index, vol=self.volume_current)
         elif self.mode_current == "alarm":
             if btn.was_held:
-                self.clock.check_unregistered_alarm(vol = self.volume_current)
-                self.change_mode(mode = "alarm_validation")
+                self.clock.check_unregistered_alarm(vol=self.volume_current)
+                self.change_mode(mode="alarm_validation")
                 btn.was_held = False
             else:
                 self.clock.alarm[button_index] = (self.clock.alarm[button_index] + 1) % [3, 10, 6, 10][button_index]
@@ -317,34 +316,34 @@ class Box:
         elif self.mode_current == "alarm_validation":
             if btn.was_held:
                 # register and quit
-                self.clock.register_alarm(vol = self.volume_current)
-                self.change_mode(mode = "player_night")
+                self.clock.register_alarm(vol=self.volume_current)
+                self.change_mode(mode="player_night")
                 btn.was_held = False
             else:
                 # cancel and return to player
                 if button_index == 0:
-                    self.clock.reset_soft(vol = self.volume_current)
-                    self.change_mode(mode = "player_night")
+                    self.clock.reset_soft(vol=self.volume_current)
+                    self.change_mode(mode="player_night")
                 # return to preset
                 if button_index == 1:
-                    self.clock.reset_soft(vol = self.volume_current)
-                    self.change_mode(mode = "alarm")
+                    self.clock.reset_soft(vol=self.volume_current)
+                    self.change_mode(mode="alarm")
                 # list all alarms
                 if button_index == 2:
-                    self.clock.list_alarms(vol = self.volume_current)
+                    self.clock.list_alarms(vol=self.volume_current)
                 # cancel all alarms
                 if button_index == 3:
-                    self.clock.reset_hard(vol = self.volume_current)
-                    self.change_mode(mode = "player_night")
+                    self.clock.reset_hard(vol=self.volume_current)
+                    self.change_mode(mode="player_night")
 
     def change_mode(self, mode):
         if mode == "alarm":
-            self.clock.reset_soft(vol = 0)
+            self.clock.reset_soft(vol=0)
         elif mode not in ["alarm_validation", "player_night"]:
-            raise ValueError('Unknown mode: ' + mode)
+            raise ValueError('Unknown mode: '+mode)
         self.player_music.player.stop()
         self.mode_current = mode
-        self.player_system.play_sound(track_name = self.tracks_system[mode], vol = self.volume_current)
+        self.player_system.play_sound(track_name=self.tracks_system[mode], vol=self.volume_current)
         print(self.mode_current)
 
     def push_mode_button(self):
@@ -353,7 +352,7 @@ class Box:
             print("button mode was held")
             i = self.mode_list.index(self.mode_current)
             i = i + 1 if i + 1 < len(self.mode_list) else 0
-            self.change_mode(mode = self.mode_list[i])
+            self.change_mode(mode=self.mode_list[i])
             self.button_rotary_push.was_held = False
         else:
             self.clock.speak(vol = self.volume_current)
@@ -362,18 +361,18 @@ class Box:
         "Change the volume of all players"
         #print("CLK = " + str(self.button_rotary_CLK.value) + " DT = " + str(self.button_rotary_DT.value))
         add_volume = self.volume_step if self.button_rotary_DT.value == 0 else - self.volume_step
-        self.volume_current = max(min(self.volume_current + add_volume, self.volume_max), 0)
-        self.player_music.update_volume(vol = self.volume_current)
-        self.player_system.update_volume(vol = self.volume_current, verbose = False)
+        self.volume_current = max(min(self.volume_current+add_volume, self.volume_max), 0)
+        self.player_music.update_volume(vol=self.volume_current)
+        self.player_system.update_volume(vol=self.volume_current, verbose=False)
 
 
 ## RUNNING THE PROGRAM
 
-Box(gpio_push_buttons = [11, 10, 22, 9],
-    gpio_button_rotary_push = 25, gpio_button_rotary_CLK = 7, gpio_button_rotary_DT = 8,
-    path_music_sound = "/home/pi/playlist_night",
-    path_system_sound = "/home/pi/playlist_system",
-    file_to_alarms = "/home/pi/judsound_alarms",
-    possible_modes = ["player_night", "alarm"],
-    vol_ini = 20, vol_step = 1, vol_max = 100, vol_startup = 20, vol_alarm = 50,
-    hold_time = 1, vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4)
+Box(gpio_push_buttons=[11, 10, 22, 9],
+    gpio_button_rotary_push=25, gpio_button_rotary_CLK=7, gpio_button_rotary_DT=8,
+    path_music_sound="/home/pi/playlist_night",
+    path_system_sound="/home/pi/playlist_system",
+    file_to_alarms="/home/pi/judsound_alarms",
+    possible_modes=["player_night", "alarm"],
+    vol_ini=20, vol_step=1, vol_max=100, vol_startup=20, vol_alarm=50,
+    hold_time=1, vol_diff_hours=3, pause_h_m=0.7, pause_0m_m=0.4)
