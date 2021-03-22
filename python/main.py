@@ -71,7 +71,7 @@ class Player:
                 self.player.play()
         self.update_volume(vol)
 
-    def play_sound(self, track_name, vol):
+    def play_sound(self, track_name, vol, wait_till_completion = True):
         """Play an audio file fully with no pause/resume/stop possible
 
         This is the function called to speak the time and produce other system sound
@@ -79,12 +79,22 @@ class Player:
         Keyword arguments:
         track_name -- a string indicating which audio file to play (as defined in self.tracks_dictionary)
         vol -- an integer specifying the volume used to play the music
+        wait_till_completion -- a boolean indicating whether or not to wait till the sound has fully played
         """
 
         file = self.tracks_dictionary[track_name]
         self.player.set_media(self.tracks[self.tracks_files.index(file)])
         self.player.play()
         self.update_volume(vol) # note that volume is not reset after but it should not be a problem
+        if wait_till_completion:
+            self.wait_done()
+        else:
+            time.sleep(0.1)
+
+    def wait_done(self):
+        time.sleep(0.1)
+        while self.player.is_playing():
+            time.sleep(0.1)
 
     def update_volume(self, vol, verbose = True):
         "Update the volume of the player"
@@ -153,20 +163,16 @@ class Clock:
         self.alarm = [0, 0, 0, 0]
         if vol > 0:
             self.player_system.play_sound(track_name="alarm_not_set", vol=vol)
-            time.sleep(2)
 
     def reset_hard(self, vol):
         self.reset_soft(vol = 0)
         with open(self.file_to_alarms, "w"):
             pass # does nothing but erase content of file since in write mode
-        self.player_system.play_sound(track_name="alarms_deleted", vol=vol)
-        time.sleep(3)
+        self.player_system.play_sound(track_name="alarms_deleted", vol=vol, wait_till_completion=False)
 
     def check_unregistered_alarm(self, vol):
         self.player_system.play_sound(track_name="alarm_preset_at", vol=vol)
-        time.sleep(2)
         self.speak(vol=vol, time_to_read=self.alarm)
-        time.sleep(1)
 
     def register_alarm(self, vol):
         print("saving alarm to file")
@@ -174,9 +180,7 @@ class Clock:
             file.writelines(self.convert_hhmm_to_hm(time=self.alarm))
             file.write("\n")
         self.player_system.play_sound(track_name="alarm_set_at", vol=vol)
-        time.sleep(2)
         self.speak(vol=vol, time_to_read=self.alarm)
-        time.sleep(1)
 
     def read_alarms(self):
         with open(self.file_to_alarms, "r") as file:
@@ -191,18 +195,15 @@ class Clock:
             self.read_alarms()
         if self.alarms:
             self.player_system.play_sound(track_name="alarms_list", vol=vol)
-            time.sleep(2)
             for alarm in self.alarms:
                 self.speak(vol = vol, time_to_read=alarm)
-                time.sleep(2)
         self.player_system.play_sound(track_name="alarm_validation", vol=vol)
-        time.sleep(1)
 
     def ring_alarm(self, vol, update = True):
         if update:
             self.read_alarms()
         now = self.time()
-        print(f"checking if an alarm is set for current time ({now[0]}:{now[1]})")
+        #print(f"checking if an alarm is set for current time ({now[0]}:{now[1]})")
         for alarm in self.alarms:
             target = self.convert_hhmm_to_hm(alarm)
             if target == now:
@@ -353,14 +354,16 @@ class Box:
             raise ValueError('Unknown mode: '+mode)
         self.player_music.player.stop()
         self.mode_current = mode
-        self.player_system.play_sound(track_name=mode, vol=self.volume_current)
+        self.player_system.play_sound(track_name=mode,
+                                      vol=self.volume_current,
+                                      wait_till_completion=False)
         print(self.mode_current)
 
     def push_mode_button(self):
         "Change the mode to the next one"
         while self.button_rotary_push.is_pressed:
             if self.button_rotary_push.active_time > self.hold_time:
-                print("button mode was active for more than 1 sec")
+                print(f"button mode was active for more than {self.hold_time} sec")
                 i = self.mode_list.index(self.mode_current)
                 i = i + 1 if i + 1 < len(self.mode_list) else 0
                 self.change_mode(mode=self.mode_list[i])
