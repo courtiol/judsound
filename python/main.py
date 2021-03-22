@@ -99,7 +99,7 @@ class Player:
     def update_volume(self, vol, verbose = True):
         "Update the volume of the player"
         if verbose:
-            print("update volume to " + str(vol))
+            print(f"update volume to {vol}")
         self.player.audio_set_volume(vol)
 
     def stop(self):
@@ -240,7 +240,7 @@ class Box:
                  possible_modes = ["player_night", "alarm"],
                  vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
                  hold_time = 1,
-                 vol_diff_hours = 3, pause_h_m = 0.7, pause_0m_m = 0.4):
+                 vol_diff_hours = 3, pause_h_m = 0.5, pause_0m_m = 0.4):
         "Initialize the box"
         self.mode_list = possible_modes
         self.mode_current = possible_modes[0]
@@ -261,7 +261,8 @@ class Box:
             "alarms_deleted":"alarms_deleted.wav"
         }
         for m in range(60):
-            tracks_system[f"{m}".zfill(2)] = f"{m}".zfill(2)+str(".mp3") ## add minutes/hours to dictionary
+            key = f'{m:02d}'
+            tracks_system[key] = key + '.mp3' # add minutes/hours to dictionary
         print("loaded dictionary for system sounds:")
         print(tracks_system)
         
@@ -309,10 +310,10 @@ class Box:
         if self.mode_current == "player_night":
             while btn.is_pressed:
                 if btn.active_time > self.hold_time:
-                    print("button "+str(button_index)+" was held")
+                    print(f"button {button_index} was held")
                     self.player_music.stop()
                     return
-            print("button "+str(button_index)+" was pressed")
+            print(f"button {button_index} was pressed")
             self.player_music.play_music(track_index=button_index, vol=self.volume_current)
 
         elif self.mode_current == "alarm":
@@ -323,7 +324,7 @@ class Box:
                     return
             self.clock.alarm[button_index] = (self.clock.alarm[button_index] + 1) % [3, 10, 6, 10][button_index]
             # TODO: constrain max to 23:59, not 29:59
-            print("alarm value updated to " + str(self.clock.alarm))
+            print(f"alarm value updated to {self.clock.alarm}")
         elif self.mode_current == "alarm_validation":
             while btn.is_pressed:
                 if btn.active_time > self.hold_time:
@@ -372,7 +373,7 @@ class Box:
 
     def change_volume(self):
         "Change the volume of all players"
-        #print("CLK = " + str(self.button_rotary_CLK.value) + " DT = " + str(self.button_rotary_DT.value))
+        #print(f"CLK = {self.button_rotary_CLK.value} DT = {self.button_rotary_DT.value}")
         add_volume = self.volume_step if self.button_rotary_DT.value == 0 else - self.volume_step
         self.volume_current = max(min(self.volume_current+add_volume, self.volume_max), 0)
         self.player_music.update_volume(vol=self.volume_current)
@@ -388,4 +389,4 @@ Box(gpio_push_buttons=[11, 10, 22, 9],
     file_to_alarms="/home/pi/judsound_alarms",
     possible_modes=["player_night", "alarm"],
     vol_ini=20, vol_step=1, vol_max=100, vol_startup=20, vol_alarm=50,
-    hold_time=1, vol_diff_hours=3, pause_h_m=0.7, pause_0m_m=0.4)
+    hold_time=1, vol_diff_hours=3, pause_h_m=0.5, pause_0m_m=0.4)
