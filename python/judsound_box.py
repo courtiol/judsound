@@ -27,6 +27,7 @@ class Box:
     vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
     pause_h_m -- a float specifying the time in seconds between the reading of the hours and that of the minutes (default = 0.7)
     pause_0m_m -- a float specifying the time in seconds between the reading of the 0 minute and the single digit minutes (default = 0.4)
+    tracks_system -- a dictionary for system sounds other than hours and minutes
     """
 
     def __init__(self,
@@ -35,26 +36,22 @@ class Box:
                  possible_modes = ["player_night", "alarm"],
                  vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
                  hold_time = 1,
-                 vol_diff_hours = 3, pause_h_m = 0.5, pause_0m_m = 0.4):
+                 vol_diff_hours = 3, pause_h_m = 0.5, pause_0m_m = 0.4,
+                 tracks_system = {
+                    "start": None,
+                    "alarm": None,
+                    "alarm_validation": None,
+                    "player_night": None,
+                    "alarm_preset_at": None,
+                    "alarm_set_at": None,
+                    "alarm_not_set": None,
+                    "alarm_validation3": None,
+                    "alarms_list": None,
+                    "alarms_deleted": None}):
         "Initialize the box"
         self.mode_list = possible_modes
         self.mode_current = possible_modes[0]
         
-        tracks_system = {
-            # welcome sound
-            "start": "start.wav",
-            # changing mode
-            "alarm": "alarm_mode.wav",
-            "alarm_validation": "alarm_validation.mp3",
-            "player_night": "player_night_mode.wav",
-            # setting alarm
-            "alarm_preset_at":"alarm_preset_at.wav",
-            "alarm_set_at":"alarm_set_at.wav",
-            "alarm_not_set": "alarm_not_set.wav",
-            "alarm_validation3": "alarm_validation.mp3",
-            "alarms_list": "alarms_list.wav",
-            "alarms_deleted":"alarms_deleted.wav"
-        }
         for m in range(60):
             key = f'{m:02d}'
             tracks_system[key] = key + '.mp3' # add minutes/hours to dictionary
