@@ -11,11 +11,12 @@ import time
 class Player:
     "Define class which handles the music (VLC) player"
 
-    def __init__(self, path_music):
+    def __init__(self, path_music, tracks_dictionary = {}):
         """Initialize a VLC player
 
         Keyword arguments:
         path_music -- a string specifying the path to the directory where the audio files are stored 
+        tracks_dictionary -- a dictionary for the system sounds
         """
 
         instance_vlc = vlc.Instance()
@@ -36,6 +37,7 @@ class Player:
                           for i in range(len(tracks_paths))] # register all tracks to VLC 
                                                              # (although only 4 are accessible 
                                                              # via the top push buttons)
+        self.tracks_dictionary = tracks_dictionary
 
     def play_music(self, track_index, vol):
         """Play an audio file based on its number and handle pause/resume/stop
@@ -75,11 +77,12 @@ class Player:
         This is the function called to speak the time and produce other system sound
 
         Keyword arguments:
-        track_name -- a string indicating the file name of the audio file to play
+        track_name -- a string indicating which audio file to play (as defined in self.tracks_dictionary)
         vol -- an integer specifying the volume used to play the music
         """
 
-        self.player.set_media(self.tracks[self.tracks_files.index(track_name)])
+        file = self.tracks_dictionary[track_name]
+        self.player.set_media(self.tracks[self.tracks_files.index(file)])
         self.player.play()
         self.update_volume(vol) # note that volume is not reset after but it should not be a problem
 
@@ -139,29 +142,28 @@ class Clock:
 
         print(f"{prefix} ({hours}:{minutes})")
         
-        self.player_system.play_sound(track_name=hours+".mp3",
-                                      vol=vol+self.extra_volume_hours)
+        self.player_system.play_sound(track_name=hours, vol=vol+self.extra_volume_hours)
         time.sleep(self.pause_h_m)
         if minutes < "10":
-            self.player_system.play_sound(track_name="00.mp3", vol=vol)
+            self.player_system.play_sound(track_name="00", vol=vol)
             time.sleep(self.pause_0m_m)
-        self.player_system.play_sound(track_name=minutes+".mp3", vol=vol)
+        self.player_system.play_sound(track_name=minutes, vol=vol)
 
     def reset_soft(self, vol):
         self.alarm = [0, 0, 0, 0]
         if vol > 0:
-            self.player_system.play_sound(track_name="alarm_not_set.wav", vol=vol)
+            self.player_system.play_sound(track_name="alarm_not_set", vol=vol)
             time.sleep(2)
 
     def reset_hard(self, vol):
         self.reset_soft(vol = 0)
         with open(self.file_to_alarms, "w"):
             pass # does nothing but erase content of file since in write mode
-        self.player_system.play_sound(track_name="alarms_deleted.wav", vol=vol)
+        self.player_system.play_sound(track_name="alarms_deleted", vol=vol)
         time.sleep(3)
 
     def check_unregistered_alarm(self, vol):
-        self.player_system.play_sound(track_name="alarm_preset_at.wav", vol=vol)
+        self.player_system.play_sound(track_name="alarm_preset_at", vol=vol)
         time.sleep(2)
         self.speak(vol=vol, time_to_read=self.alarm)
         time.sleep(1)
@@ -171,7 +173,7 @@ class Clock:
         with open(self.file_to_alarms, "a") as file:
             file.writelines(self.convert_hhmm_to_hm(time=self.alarm))
             file.write("\n")
-        self.player_system.play_sound(track_name="alarm_set_at.wav", vol=vol)
+        self.player_system.play_sound(track_name="alarm_set_at", vol=vol)
         time.sleep(2)
         self.speak(vol=vol, time_to_read=self.alarm)
         time.sleep(1)
@@ -188,12 +190,12 @@ class Clock:
         if update:
             self.read_alarms()
         if self.alarms:
-            self.player_system.play_sound(track_name="alarms_list.wav", vol=vol)
+            self.player_system.play_sound(track_name="alarms_list", vol=vol)
             time.sleep(2)
             for alarm in self.alarms:
                 self.speak(vol = vol, time_to_read=alarm)
                 time.sleep(2)
-        self.player_system.play_sound(track_name="alarm_validation.mp3", vol=vol)
+        self.player_system.play_sound(track_name="alarm_validation", vol=vol)
         time.sleep(1)
 
     def ring_alarm(self, vol, update = True):
@@ -205,7 +207,7 @@ class Clock:
             target = self.convert_hhmm_to_hm(alarm)
             if target == now:
                 print("ALARM RINGING!")
-                self.player_system.play_sound(track_name="start.wav", vol=vol)
+                self.player_system.play_sound(track_name="start", vol=vol)
 
 
 class Box:
@@ -241,14 +243,29 @@ class Box:
         "Initialize the box"
         self.mode_list = possible_modes
         self.mode_current = possible_modes[0]
-        self.player_system = Player(path_music=path_system_sound)
-        self.tracks_system = {
+        
+        tracks_system = {
+            # welcome sound
             "start": "start.wav",
+            # changing mode
             "alarm": "alarm_mode.wav",
             "alarm_validation": "alarm_validation.mp3",
             "player_night": "player_night_mode.wav",
+            # setting alarm
+            "alarm_preset_at":"alarm_preset_at.wav",
+            "alarm_set_at":"alarm_set_at.wav",
+            "alarm_not_set": "alarm_not_set.wav",
+            "alarm_validation3": "alarm_validation.mp3",
+            "alarms_list": "alarms_list.wav",
+            "alarms_deleted":"alarms_deleted.wav"
         }
-        self.player_system.play_sound(track_name=self.tracks_system["start"], vol=vol_startup)
+        for m in range(60):
+            tracks_system[f"{m}".zfill(2)] = f"{m}".zfill(2)+str(".mp3") ## add minutes/hours to dictionary
+        print("loaded dictionary for system sounds:")
+        print(tracks_system)
+        
+        self.player_system = Player(path_music=path_system_sound, tracks_dictionary=tracks_system)
+        self.player_system.play_sound(track_name="start", vol=vol_startup)
         self.player_music = Player(path_music=path_music_sound)
         self.volume_current = vol_ini
         self.volume_step = vol_step
@@ -343,7 +360,7 @@ class Box:
             raise ValueError('Unknown mode: '+mode)
         self.player_music.player.stop()
         self.mode_current = mode
-        self.player_system.play_sound(track_name=self.tracks_system[mode], vol=self.volume_current)
+        self.player_system.play_sound(track_name=mode, vol=self.volume_current)
         print(self.mode_current)
 
     def push_mode_button(self):
