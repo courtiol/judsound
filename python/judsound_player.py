@@ -24,10 +24,8 @@ class Player:
         files_in_path_music = sorted(os.listdir(path_music)) # extract and sort files 
                                                              # (since max # should be < 10,
                                                              # simple sorting should work)
-        self.tracks_files = list(filter(
-                                lambda x: re.search('.*mp3$|.*wav$', x),
-                                files_in_path_music
-                            )) # only keep file starting with number and ending with mp3 or wav
+        self.tracks_files = [file for file in files_in_path_music if file.endswith('mp3') or file.endswith('wav')]
+
         tracks_paths = [path_music + '/' + s 
                           for s in self.tracks_files] # add path to file names
         self.tracks = [instance_vlc.media_new(tracks_paths[i]) 
