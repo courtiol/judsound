@@ -49,26 +49,12 @@ class Box:
                     "alarms_list": None,
                     "alarms_deleted": None}):
         "Initialize the box"
-        self.mode_list = possible_modes
-        self.mode_current = possible_modes[0]
-        
-        for m in range(60):
-            key = f'{m:02d}'
-            tracks_system[key] = key + '.mp3' # add minutes/hours to dictionary
-        print("loaded dictionary for system sounds:")
-        print(tracks_system)
-        
-        self.player_system = judsound_player.Player(path_music=path_system_sound, tracks_dictionary=tracks_system)
-        self.player_system.play_sound(track_name="start", vol=vol_startup)
-        self.player_music = judsound_player.Player(path_music=path_music_sound)
+
+        # setting volumes
         self.volume_current = vol_ini
         self.volume_step = vol_step
         self.volume_max = vol_max
-        self.clock = judsound_clock.Clock(player_system=self.player_system,
-                                          file_to_alarms=file_to_alarms,
-                                          vol_diff_hours=vol_diff_hours,
-                                          pause_h_m=pause_h_m, pause_0m_m=pause_0m_m)
-        
+
         # setting the mapping for all physical inputs
         gpiozero.Button.was_held = False
         self.push_buttons = [gpiozero.Button(btn) for btn in gpio_push_buttons]
@@ -87,7 +73,29 @@ class Box:
             # note: i = btn_index is required for lambda to work using the right scope (specific to using for loops)
             # (i.e. don't pass argument(s) directly to push_top_button call)
 
-        # alarm
+        # setting modes
+        self.mode_list = possible_modes
+        self.mode_current = possible_modes[0]
+        
+        # filling dictionary for system sounds
+        for m in range(60):
+            key = f'{m:02d}'
+            tracks_system[key] = key + '.mp3' # add minutes/hours to dictionary
+        print("loaded dictionary for system sounds:")
+        print(tracks_system)
+        
+        # setting players
+        self.player_system = judsound_player.Player(path_music=path_system_sound, tracks_dictionary=tracks_system)
+        self.player_system.play_sound(track_name="start", vol=vol_startup)
+        self.player_music = judsound_player.Player(path_music=path_music_sound)
+
+        # setting clock
+        self.clock = judsound_clock.Clock(player_system=self.player_system,
+                                          file_to_alarms=file_to_alarms,
+                                          vol_diff_hours=vol_diff_hours,
+                                          pause_h_m=pause_h_m, pause_0m_m=pause_0m_m)
+
+        # running alarm
         while(True):
             self.clock.ring_alarm(vol=vol_alarm)
             time.sleep(60)
@@ -174,4 +182,3 @@ class Box:
         self.volume_current = max(min(self.volume_current+add_volume, self.volume_max), 0)
         self.player_music.update_volume(vol=self.volume_current)
         self.player_system.update_volume(vol=self.volume_current, verbose=False)
-
