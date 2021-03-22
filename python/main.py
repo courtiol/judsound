@@ -192,7 +192,7 @@ class Clock:
         "Reset all alarms"
         self.reset_soft(vol = 0)
         self.delete_alarms()
-        self.player_system.play_sound(track_name="alarms_deleted", vol=vol, wait_till_completion=False)
+        self.player_system.play_sound(track_name="alarms_deleted", vol=vol)
 
     def check_unregistered_alarm(self, vol):
         "Check if the alarm has been preset properly (return False if not)"
@@ -218,7 +218,9 @@ class Clock:
             self.player_system.play_sound(track_name="alarms_list", vol=vol)
             for alarm in self.alarms:
                 self.speak(vol = vol, time_to_read=alarm)
-        self.player_system.play_sound(track_name="alarm_validation", vol=vol)
+        self.player_system.play_sound(track_name="alarm_validation", vol=vol,
+                                      wait_till_completion = False)
+        # TODO implement sound for else
 
     def ring_alarm(self, vol, update = True):
         if update:
