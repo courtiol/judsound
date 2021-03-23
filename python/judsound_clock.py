@@ -40,6 +40,7 @@ class Clock:
 
     def write_alarms(self):
         "Write the alarms into the text file"
+        self.alarms.sort() # sort the alarms
         with open(self.file_to_alarms, "w") as file:
             for alarm in self.alarms:
                 file.writelines(self.convert_hhmm_to_hm(time=alarm))
