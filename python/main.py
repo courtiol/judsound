@@ -19,7 +19,7 @@ judsound_box.Box(gpio_push_buttons=[11, 10, 22, 9],
                      "player_night": "player_night_mode.wav",
                      # setting alarm
                      "alarm_preset_at":"alarm_preset_at.wav",
-                     "alarm_set_at":"alarm_set_at.wav",
+                     "alarm_set":"alarm_set.wav",
                      "alarm_not_set": "alarm_not_set.wav",
                      "alarm_setting": "alarm_setting.mp3",
                      "alarm_validation": "alarm_validation.mp3",

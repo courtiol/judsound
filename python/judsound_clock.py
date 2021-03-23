@@ -12,7 +12,7 @@ class Clock:
         player_system -- an object of class Player
         file_to_alarms -- a string specifying the file (including its paths) where alarms are written and read
         vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
-     """
+       """
 
        self.extra_volume_hours = vol_diff_hours
        self.player_system = player_system
@@ -95,8 +95,7 @@ class Clock:
         if self.alarm not in self.alarms: # prevent duplicates
             self.alarms.append(self.alarm) # add alarm to in-memory list
         self.write_alarms() # update text file
-        self.player_system.play_sound(track_name="alarm_set_at", vol=vol)
-        self.speak(vol=vol, time_to_read=self.alarm)
+        self.player_system.play_sound(track_name="alarm_set", vol=vol)
 
     def list_alarms(self, vol, update = True):
         if update:
