@@ -5,23 +5,18 @@ import time
 class Clock:
     "Define the class which handles the alarm-clock"
 
-    def __init__(self, player_system, file_to_alarms, vol_diff_hours = 3,
-                 pause_h_m = 0.7, pause_0m_m = 0.4):
+    def __init__(self, player_system, file_to_alarms, vol_diff_hours = 1):
        """Initialize the clock
 
        Keyword arguments:
         player_system -- an object of class Player
         file_to_alarms -- a string specifying the file (including its paths) where alarms are written and read
         vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
-        pause_h_m -- a float specifying the time in seconds between the reading of the hours and that of the minutes (default = 0.7)
-        pause_0m_m -- a float specifying the time in seconds between the reading of the 0 minute and the single digit minutes (default = 0.4)
-       """
+     """
 
        self.extra_volume_hours = vol_diff_hours
        self.player_system = player_system
        self.file_to_alarms = file_to_alarms
-       self.pause_h_m = pause_h_m
-       self.pause_0m_m = pause_0m_m
        self.alarm = [0, 0, 0, 0] # a given alarm being set
        self.alarms = [] # the list of alarms
 
@@ -70,10 +65,8 @@ class Clock:
         print(f"{prefix} ({hours}:{minutes})")
         
         self.player_system.play_sound(track_name=hours, vol=vol+self.extra_volume_hours)
-        time.sleep(self.pause_h_m)
         if minutes < "10":
             self.player_system.play_sound(track_name="00", vol=vol)
-            time.sleep(self.pause_0m_m)
         self.player_system.play_sound(track_name=minutes, vol=vol)
 
     def reset_soft(self, vol):

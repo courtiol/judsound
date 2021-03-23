@@ -25,8 +25,6 @@ class Box:
     vol_alarm -- an integer specifying the volume of the alarm (default = 50)
     hold_time -- an integer specifying the duration (in seconds) for which the press of a push button triggers a holding behaviour (default = 1) 
     vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
-    pause_h_m -- a float specifying the time in seconds between the reading of the hours and that of the minutes (default = 0.7)
-    pause_0m_m -- a float specifying the time in seconds between the reading of the 0 minute and the single digit minutes (default = 0.4)
     tracks_system -- a dictionary for system sounds other than hours and minutes
     """
 
@@ -36,7 +34,7 @@ class Box:
                  possible_modes = ["player_night", "alarm"],
                  vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
                  hold_time = 1,
-                 vol_diff_hours = 3, pause_h_m = 0.5, pause_0m_m = 0.4,
+                 vol_diff_hours = 1,
                  tracks_system = {
                     "start": None,
                     "alarm": None,
@@ -92,8 +90,7 @@ class Box:
         # setting clock
         self.clock = judsound_clock.Clock(player_system=self.player_system,
                                           file_to_alarms=file_to_alarms,
-                                          vol_diff_hours=vol_diff_hours,
-                                          pause_h_m=pause_h_m, pause_0m_m=pause_0m_m)
+                                          vol_diff_hours=vol_diff_hours)
 
         # running alarm
         while(True):
