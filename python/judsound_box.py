@@ -139,7 +139,7 @@ class Box:
                         self.change_mode(mode="alarm_setting")
                     return
             self.clock.alarm[button_index] = (self.clock.alarm[button_index] + 1) % [3, 10, 6, 10][button_index]
-            # TODO: constrain max to 23:59, not 29:59
+            # nb: that time is correct and not e.g. 26:30 is checked in Clock.check_unregistered_alarm()
             print(f"alarm value updated to {self.clock.alarm}")
 
         elif self.mode_current == "alarm_validation":
