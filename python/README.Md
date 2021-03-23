@@ -38,11 +38,6 @@ Explanations on how rotary encoders communicate certainly helped (see e.g. [here
 There seem to be a [plan]((https://github.com/gpiozero/gpiozero/pull/482)) to add that support to `gpiozero`.
 
 
-### signal
-
-I used a single function from the library [`signal`](https://docs.python.org/3/library/signal.html) -- `signal.pause()` -- but it is an important one since it is the one that allows for the program to keep running, waiting for inputs from the user.
-
-
 ## Playing music?
 
 I created a class `Player` to create VLC players. Using different players simplifies a bit the programming. For example, different usage mode (alarm, music...) can have their own player with dedicated music tracks. It also allows you to play several tracks simultaneously. For instance, I chose for now that the reading of the time happens without pausing the music (since my wife listens to guided mediation, it makes sense; over Hard Rock, probably not).
@@ -68,12 +63,4 @@ I created a class `Player` to create VLC players. Using different players simpli
 ### Infra red transmitter
 
 (to come)
-
-
-
-
-
-
-
-
 
