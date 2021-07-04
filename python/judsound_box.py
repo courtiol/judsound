@@ -14,10 +14,11 @@ class Box:
     gpio_button_rotary_push -- an integer specifying the GPIO pin number to which the push button from the rotary encoder is connected
     gpio_button_rotary_CLK -- an integer specifying the GPIO pin number to which the CLK output from the rotary encoder is connected
     gpio_button_rotary_DT -- an integer specifying the GPIO pin number to which the DT output from the rotary encoder is connected
-    path_music_sound -- a string specifying the path to the directory where the audio files for the playlist are stored
+    path_music_night -- a string specifying the path to the directory where the audio files for the night playlist are stored
+    path_music_day -- a string specifying the path to the directory where the audio files for the day playlist are stored
     path_system_sound -- a string specifying the path to the directory where the audio files for clock and system sounds are stored
     file_to_alarms -- a string specifying the file (including its paths) where alarms are written and read
-    possible_modes -- an array of strings specifying the possible mode for the player (default = ["player_night"])
+    possible_modes -- an array of strings specifying the possible mode for the player (default = ["player_night", "alarm", "player_day"])
     vol_ini -- an integer specifying the baseline volume (default = 30)
     vol_step -- an integer specifying by how much the volume changes when the rotary encoder clicks once (default = 1)
     vol_max -- an integer specifying the maximum volume allowed (to protect the speaker; default = 100)
@@ -30,8 +31,8 @@ class Box:
 
     def __init__(self,
                  gpio_push_buttons, gpio_button_rotary_push, gpio_button_rotary_CLK, gpio_button_rotary_DT,
-                 path_music_sound, path_system_sound, file_to_alarms,
-                 possible_modes = ["player_night", "alarm"],
+                 path_music_night, path_music_day, path_system_sound, file_to_alarms,
+                 possible_modes = ["player_night", "alarm", "player_day"],
                  vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
                  hold_time = 1,
                  vol_diff_hours = 1,
@@ -39,6 +40,7 @@ class Box:
                     "start": None,
                     "alarm": None,
                     "player_night": None,
+                    "player_day": None,
                     "alarm_preset_at": None,
                     "alarm_set": None,
                     "alarm_not_set": None,
@@ -85,7 +87,8 @@ class Box:
         # setting players
         self.player_system = judsound_player.Player(path_music=path_system_sound, tracks_dictionary=tracks_system)
         self.player_system.play_sound(track_name="start", vol=vol_startup)
-        self.player_music = judsound_player.Player(path_music=path_music_sound)
+        self.player_music_night = judsound_player.Player(path_music=path_music_night)
+        self.player_music_day = judsound_player.Player(path_music=path_music_day)
 
         # setting clock
         self.clock = judsound_clock.Clock(player_system=self.player_system,
@@ -108,10 +111,19 @@ class Box:
             while btn.is_pressed:
                 if btn.active_time > self.hold_time:
                     print(f"button {button_index} was held")
-                    self.player_music.stop()
+                    self.player_music_night.stop()
                     return
             print(f"button {button_index} was pressed")
-            self.player_music.play_music(track_index=button_index, vol=self.volume_current)
+            self.player_music_night.play_music(track_index=button_index, vol=self.volume_current)
+
+        elif self.mode_current == "player_day":
+            while btn.is_pressed:
+                if btn.active_time > self.hold_time:
+                    print(f"button {button_index} was held")
+                    self.player_music_day.stop()
+                    return
+            print(f"button {button_index} was pressed")
+            self.player_music_day.play_music(track_index=button_index, vol=self.volume_current)
 
         elif self.mode_current == "alarm":
             # go to alarm setting
@@ -126,9 +138,9 @@ class Box:
             elif button_index == 2:
                 self.clock.reset_hard(vol=self.volume_current)
                 self.change_mode(mode="alarm")
-            # quit
+            # quit and return to default mode
             elif button_index == 3:
-                self.change_mode(mode="player_night")
+                self.change_mode(mode=possible_modes[0])
 
         elif self.mode_current == "alarm_setting":
             while btn.is_pressed:
@@ -143,10 +155,10 @@ class Box:
             print(f"alarm value updated to {self.clock.alarm}")
 
         elif self.mode_current == "alarm_validation":
-            # validate
+            # validate and return to default mode
             if button_index == 0:
                 self.clock.register_alarm(vol=self.volume_current)
-                self.change_mode(mode="player_night")
+                self.change_mode(mode=possible_modes[0])
             # redo
             elif button_index == 1:
                 self.clock.reset_soft(vol=self.volume_current)
@@ -155,16 +167,17 @@ class Box:
             elif button_index == 2:
                 self.clock.speak(vol=self.volume_current, time_to_read=self.clock.alarm)
                 self.change_mode(mode="alarm_validation")
-            # quit
+            # quit and return to default mode
             elif button_index == 3:
-                self.change_mode(mode="player_night")    
+                self.change_mode(mode=possible_modes[0])    
 
     def change_mode(self, mode):
         if mode == "alarm":
             self.clock.reset_soft(vol=0)
-        elif mode not in ["alarm_validation", "alarm_setting", "player_night"]:
+        elif mode not in ["alarm_validation", "alarm_setting", "player_night", "player_day"]:
             raise ValueError('Unknown mode: '+mode)
-        self.player_music.player.stop()
+        self.player_music_night.player.stop()
+        self.player_music_day.player.stop()
         self.mode_current = mode
         self.player_system.play_sound(track_name=mode,
                                       vol=self.volume_current,
@@ -189,5 +202,6 @@ class Box:
         #print(f"CLK = {self.button_rotary_CLK.value} DT = {self.button_rotary_DT.value}")
         add_volume = self.volume_step if self.button_rotary_DT.value == 0 else - self.volume_step
         self.volume_current = max(min(self.volume_current+add_volume, self.volume_max), 0)
-        self.player_music.update_volume(vol=self.volume_current)
+        self.player_music_night.update_volume(vol=self.volume_current)
+        self.player_music_day.update_volume(vol=self.volume_current)
         self.player_system.update_volume(vol=self.volume_current, verbose=False)
