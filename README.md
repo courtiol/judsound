@@ -53,3 +53,5 @@ The point is to build a complete, functional, device meeting the wishes of my wi
 
 In this repository I will try to document everything here as the project develops, so that other people could replicate this project or find some inspiration for their own projects.
 
+**Update**: the project has been up and running for a while. I am very pleased with it, it works like a charm. I just have not set the required time yet to document things here. Hopefully, I will do so in some future holidays.
+
