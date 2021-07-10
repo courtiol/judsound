@@ -150,7 +150,7 @@ class Box:
                 self.change_mode(mode="alarm")
             # quit and return to default mode
             elif button_index == 3:
-                self.change_mode(mode=possible_modes[0])
+                self.change_mode(mode=self.mode_current)
 
         elif self.mode_current == "alarm_setting":
             while btn.is_pressed:
@@ -168,7 +168,7 @@ class Box:
             # validate and return to default mode
             if button_index == 0:
                 self.clock.register_alarm(vol=self.volume_current)
-                self.change_mode(mode=possible_modes[0])
+                self.change_mode(mode=self.mode_current)
             # redo
             elif button_index == 1:
                 self.clock.reset_soft(vol=self.volume_current)
@@ -179,7 +179,7 @@ class Box:
                 self.change_mode(mode="alarm_validation")
             # quit and return to default mode
             elif button_index == 3:
-                self.change_mode(mode=possible_modes[0])    
+                self.change_mode(mode=self.mode_current)    
 
     def change_mode(self, mode, speak = True):
         if mode == "alarm":
