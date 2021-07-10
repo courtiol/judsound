@@ -26,6 +26,8 @@ class Box:
     vol_alarm -- an integer specifying the volume of the alarm (default = 50)
     hold_time -- an integer specifying the duration (in seconds) for which the press of a push button triggers a holding behaviour (default = 1) 
     vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
+    night_day_h -- an integer specifying at what time the day period starts
+    day_night_h -- an integer specifying at what time the night period starts
     tracks_system -- a dictionary for system sounds other than hours and minutes
     """
 
@@ -36,6 +38,8 @@ class Box:
                  vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
                  hold_time = 1,
                  vol_diff_hours = 1,
+                 night_day_h = 8,
+                 day_night_h = 20,
                  tracks_system = {
                     "start": None,
                     "alarm": None,
@@ -93,11 +97,17 @@ class Box:
         # setting clock
         self.clock = judsound_clock.Clock(player_system=self.player_system,
                                           file_to_alarms=file_to_alarms,
-                                          vol_diff_hours=vol_diff_hours)
+                                          vol_diff_hours=vol_diff_hours,
+                                          night_day_h=night_day_h,
+                                          day_night_h=day_night_h)
 
-        # running alarm
+        # running alarm and automatic mode change
         while(True):
             self.clock.ring_alarm(vol=vol_alarm)
+            if self.clock.is_day() and self.mode_current == "player_night":
+                self.change_mode("player_day", speak = False)
+            elif not self.clock.is_day() and self.mode_current == "player_day":
+                self.change_mode("player_night", speak = False)
             time.sleep(60)
         
         # wait until user action
@@ -140,7 +150,7 @@ class Box:
                 self.change_mode(mode="alarm")
             # quit and return to default mode
             elif button_index == 3:
-                self.change_mode(mode=self.mode_list[0])
+                self.change_mode(mode=possible_modes[0])
 
         elif self.mode_current == "alarm_setting":
             while btn.is_pressed:
@@ -158,7 +168,7 @@ class Box:
             # validate and return to default mode
             if button_index == 0:
                 self.clock.register_alarm(vol=self.volume_current)
-                self.change_mode(mode=self.mode_list[0])
+                self.change_mode(mode=possible_modes[0])
             # redo
             elif button_index == 1:
                 self.clock.reset_soft(vol=self.volume_current)
@@ -169,9 +179,9 @@ class Box:
                 self.change_mode(mode="alarm_validation")
             # quit and return to default mode
             elif button_index == 3:
-                self.change_mode(mode=self.mode_list[0])    
+                self.change_mode(mode=possible_modes[0])    
 
-    def change_mode(self, mode):
+    def change_mode(self, mode, speak = True):
         if mode == "alarm":
             self.clock.reset_soft(vol=0)
         elif mode not in ["alarm_validation", "alarm_setting", "player_night", "player_day"]:
@@ -179,9 +189,10 @@ class Box:
         self.player_music_night.player.stop()
         self.player_music_day.player.stop()
         self.mode_current = mode
-        self.player_system.play_sound(track_name=mode,
-                                      vol=self.volume_current,
-                                      wait_till_completion=False)
+        if speak:
+            self.player_system.play_sound(track_name=mode,
+                                          vol=self.volume_current,
+                                          wait_till_completion=False)
         print(self.mode_current)
 
     def push_mode_button(self):

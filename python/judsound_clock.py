@@ -5,13 +5,15 @@ import time
 class Clock:
     "Define the class which handles the alarm-clock"
 
-    def __init__(self, player_system, file_to_alarms, vol_diff_hours = 1):
+    def __init__(self, player_system, file_to_alarms, vol_diff_hours = 1, night_day_h = 8, day_night_h = 20):
        """Initialize the clock
 
        Keyword arguments:
         player_system -- an object of class Player
         file_to_alarms -- a string specifying the file (including its paths) where alarms are written and read
         vol_diff_hours -- an integer specifying how much more than the baseline volume to speak the hours (default = 3)
+        night_day_h -- an integer specifying at what time the day period starts
+        day_night_h -- an integer specifying at what time the night period starts
        """
 
        self.extra_volume_hours = vol_diff_hours
@@ -19,11 +21,21 @@ class Clock:
        self.file_to_alarms = file_to_alarms
        self.alarm = [0, 0, 0, 0] # a given alarm being set
        self.alarms = [] # the list of alarms
+       self.night_day_h = night_day_h
+       self.day_night_h = day_night_h
 
-    def time(self):
+    @staticmethod
+    def time():
         hours = time.strftime("%H", time.localtime())
         minutes = time.strftime("%M", time.localtime())
         return [hours, minutes]
+
+    def is_day(self):
+        "Figure out if it is currently the day or the night"
+        time = self.time()
+        if int(time[0]) >  self.night_day_h and int(time[0]) < self.day_night_h:
+            return True
+        return False
 
     @staticmethod
     def convert_hhmm_to_hm(time):
