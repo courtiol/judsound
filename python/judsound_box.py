@@ -105,9 +105,9 @@ class Box:
         while(True):
             self.clock.ring_alarm(vol=vol_alarm)
             if self.clock.is_day() and self.mode_current == "player_night":
-                self.change_mode("player_day", speak = False)
+                self.change_mode(mode="player_day", speak=False)
             elif not self.clock.is_day() and self.mode_current == "player_day":
-                self.change_mode("player_night", speak = False)
+                self.change_mode(mode="player_night", speak=False)
             time.sleep(60)
         
         # wait until user action
