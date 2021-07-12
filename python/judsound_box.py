@@ -77,9 +77,6 @@ class Box:
             # note: i = btn_index is required for lambda to work using the right scope (specific to using for loops)
             # (i.e. don't pass argument(s) directly to push_top_button call)
 
-        # setting modes
-        self.mode_list = possible_modes
-        self.mode_current = possible_modes[0]
         
         # filling dictionary for system sounds
         for m in range(60):
@@ -101,12 +98,24 @@ class Box:
                                           night_day_h=night_day_h,
                                           day_night_h=day_night_h)
 
+        # setting current and fallback modes
+        self.mode_list = possible_modes
+        if self.clock.is_day():
+            self.mode_fallback = "player_day" # mode when leaving the alarm
+            self.mode_current = "player_day"    
+        else:
+            self.mode_fallback = "player_night"
+            self.mode_current = "player_night"
+        self.change_mode(mode=self.mode_current, speak=True)
+
         # running alarm and automatic mode change
         while(True):
             self.clock.ring_alarm(vol=vol_alarm)
             if self.clock.is_day() and self.mode_current == "player_night":
+                self.mode_fallback = "player_day"
                 self.change_mode(mode="player_day", speak=False)
             elif not self.clock.is_day() and self.mode_current == "player_day":
+                self.mode_fallback = "player_night"
                 self.change_mode(mode="player_night", speak=False)
             time.sleep(60)
         
@@ -148,9 +157,9 @@ class Box:
             elif button_index == 2:
                 self.clock.reset_hard(vol=self.volume_current)
                 self.change_mode(mode="alarm")
-            # quit and return to default mode
+            # quit and return to fallback mode
             elif button_index == 3:
-                self.change_mode(mode=self.mode_current)
+                self.change_mode(mode=self.mode_fallback)
 
         elif self.mode_current == "alarm_setting":
             while btn.is_pressed:
@@ -165,10 +174,10 @@ class Box:
             print(f"alarm value updated to {self.clock.alarm}")
 
         elif self.mode_current == "alarm_validation":
-            # validate and return to default mode
+            # validate and return to fallback mode
             if button_index == 0:
                 self.clock.register_alarm(vol=self.volume_current)
-                self.change_mode(mode=self.mode_current)
+                self.change_mode(mode=self.mode_fallback)
             # redo
             elif button_index == 1:
                 self.clock.reset_soft(vol=self.volume_current)
@@ -177,9 +186,9 @@ class Box:
             elif button_index == 2:
                 self.clock.speak(vol=self.volume_current, time_to_read=self.clock.alarm)
                 self.change_mode(mode="alarm_validation")
-            # quit and return to default mode
+            # quit and return to fallback mode
             elif button_index == 3:
-                self.change_mode(mode=self.mode_current)    
+                self.change_mode(mode=self.mode_fallback)    
 
     def change_mode(self, mode, speak = True):
         if mode == "alarm":

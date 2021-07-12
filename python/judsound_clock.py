@@ -33,7 +33,7 @@ class Clock:
     def is_day(self):
         "Figure out if it is currently the day or the night"
         time = self.time()
-        if int(time[0]) >  self.night_day_h and int(time[0]) < self.day_night_h:
+        if int(time[0]) >=  self.night_day_h and int(time[0]) < self.day_night_h:
             return True
         return False
 
