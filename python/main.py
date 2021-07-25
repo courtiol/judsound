@@ -13,7 +13,7 @@ judsound_box.Box(gpio_push_buttons=[11, 10, 22, 9],
     possible_modes=["player_night", "alarm", "player_day"],
     vol_ini=20, vol_step=3, vol_max=100, vol_startup=50, vol_alarm=50,
     hold_time=1, vol_diff_hours=1,
-    night_day_h = 8,
+    night_day_h = 6,
     day_night_h = 20,
     tracks_system = {# welcome sound
                      "start": "start.wav",

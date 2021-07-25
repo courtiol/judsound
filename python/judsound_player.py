@@ -86,9 +86,9 @@ class Player:
             time.sleep(0.1)
 
     def wait_done(self):
-        time.sleep(0.1)
+        time.sleep(0.2)
         while self.player.is_playing():
-            time.sleep(0.1)
+            time.sleep(0.2)
 
     def update_volume(self, vol, verbose = True):
         "Update the volume of the player"

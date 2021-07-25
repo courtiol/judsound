@@ -111,10 +111,10 @@ class Box:
         # running alarm and automatic mode change
         while(True):
             self.clock.ring_alarm(vol=vol_alarm)
-            if self.clock.is_day() and self.mode_current == "player_night":
+            if self.clock.is_day() and self.mode_current == "player_night" and not self.player_music_night.player.is_playing():
                 self.mode_fallback = "player_day"
                 self.change_mode(mode="player_day", speak=False)
-            elif not self.clock.is_day() and self.mode_current == "player_day":
+            elif not self.clock.is_day() and self.mode_current == "player_day" and not self.player_music_day.player.is_playing():
                 self.mode_fallback = "player_night"
                 self.change_mode(mode="player_night", speak=False)
             time.sleep(60)

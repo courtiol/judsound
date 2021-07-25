@@ -5,7 +5,7 @@ import time
 class Clock:
     "Define the class which handles the alarm-clock"
 
-    def __init__(self, player_system, file_to_alarms, vol_diff_hours = 1, night_day_h = 8, day_night_h = 20):
+    def __init__(self, player_system, file_to_alarms, vol_diff_hours = 1, night_day_h = 6, day_night_h = 20):
        """Initialize the clock
 
        Keyword arguments:
