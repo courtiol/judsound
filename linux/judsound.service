@@ -1,0 +1,12 @@
+[Unit]
+Description=Judsound
+
+[Service]
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /home/pi/physical_computing/main.py
+StandardOutput=file:/home/pi/judsound_output.log
+StandardError=append:/home/pi/judsound_error.log
+
+[Install]
+WantedBy=default.target
+
