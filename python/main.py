@@ -26,6 +26,7 @@ judsound_box.Box(gpio_push_buttons=[11, 10, 22, 9],
                      "alarm_set":"alarm_set.mp3",
                      "alarm_not_set": "alarm_not_set.wav",
                      "alarm_setting": "alarm_setting.mp3",
+                     "alarm_none": "alarm_none.wav",
                      "alarm_validation": "alarm_validation.mp3",
                      "alarms_list": "alarms_list.wav",
                      "alarms_deleted":"alarms_deleted.wav"})

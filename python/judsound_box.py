@@ -49,6 +49,7 @@ class Box:
                     "alarm_set": None,
                     "alarm_not_set": None,
                     "alarm_setting": None,
+                    "alarm_none": None,
                     "alarm_validation": None,
                     "alarms_list": None,
                     "alarms_deleted": None}):
