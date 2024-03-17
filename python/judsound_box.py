@@ -35,7 +35,7 @@ class Box:
                  gpio_push_buttons, gpio_button_rotary_push, gpio_button_rotary_CLK, gpio_button_rotary_DT,
                  path_music_night, path_music_day, path_system_sound, file_to_alarms,
                  possible_modes = ["player_night", "alarm", "player_day"],
-                 vol_ini = 30, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
+                 vol_ini = 50, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
                  hold_time = 1,
                  vol_diff_hours = 1,
                  night_day_h = 8,
@@ -147,14 +147,17 @@ class Box:
         elif self.mode_current == "alarm":
             # go to alarm setting
             if button_index == 0:
+                print(f"entering alarm setting")
                 self.clock.reset_soft(vol=0)
                 self.change_mode(mode="alarm_setting")
             # list all alarms
             elif button_index == 1:
+                print(f"listing alarms")
                 self.clock.list_alarms(vol=self.volume_current)
                 self.change_mode(mode="alarm")
             # delete all alarms
             elif button_index == 2:
+                print(f"deleting alarm")
                 self.clock.reset_hard(vol=self.volume_current)
                 self.change_mode(mode="alarm")
             # quit and return to fallback mode
@@ -175,19 +178,23 @@ class Box:
 
         elif self.mode_current == "alarm_validation":
             # validate and return to fallback mode
+            print(f"validate alarm")
             if button_index == 0:
                 self.clock.register_alarm(vol=self.volume_current)
                 self.change_mode(mode=self.mode_fallback)
             # redo
             elif button_index == 1:
+                print(f"validate setting reset")
                 self.clock.reset_soft(vol=self.volume_current)
                 self.change_mode(mode="alarm_setting")
             # listen again
             elif button_index == 2:
+                print(f"recheck alarm")
                 self.clock.speak(vol=self.volume_current, time_to_read=self.clock.alarm)
                 self.change_mode(mode="alarm_validation")
             # quit and return to fallback mode
             elif button_index == 3:
+                print(f"quit alarm setting")
                 self.change_mode(mode=self.mode_fallback)    
 
     def change_mode(self, mode, speak = True):

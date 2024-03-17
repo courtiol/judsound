@@ -79,7 +79,7 @@ class Clock:
         
         self.player_system.play_sound(track_name=hours, vol=vol+self.extra_volume_hours)
         if minutes < "10":
-            self.player_system.play_sound(track_name="00", vol=vol)
+            self.player_system.play_sound(track_name="00", vol=vol) # for "o" before min < 10.
         self.player_system.play_sound(track_name=minutes, vol=vol)
 
     def reset_soft(self, vol):

@@ -83,7 +83,7 @@ class Player:
         if wait_till_completion:
             self.wait_done()
         else:
-            time.sleep(0.1)
+            time.sleep(0.5)
 
     def wait_done(self):
         time.sleep(0.2)
