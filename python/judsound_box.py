@@ -88,9 +88,6 @@ class Box:
         
         # setting players
         self.player_system = judsound_player.Player(path_music=path_system_sound, tracks_dictionary=tracks_system)
-        self.player_system.play_sound(track_name="start", vol=vol_startup) ## not sure why but the very first sound is never
-                                                                           ## emitted by the box, so I repeat this twice
-        self.player_system.play_sound(track_name="start", vol=vol_startup) ## for it to work.
         self.player_music_night = judsound_player.Player(path_music=path_music_night)
         self.player_music_day = judsound_player.Player(path_music=path_music_day)
 
@@ -101,6 +98,13 @@ class Box:
                                           night_day_h=night_day_h,
                                           day_night_h=day_night_h)
 
+        # initialisation (note: if initialisation skipped, first time sound played do not work... not sure why)
+        self.clock.speak(vol=0) ## tell current time once at zero volume for initialisation
+        self.player_system.play_sound(track_name="start", vol=0)  ## tell start message once at zero volume for initialisation
+        
+        # welcome message
+        self.player_system.play_sound(track_name="start", vol=vol_startup)
+
         # setting current and fallback modes
         self.mode_list = possible_modes
         if self.clock.is_day():
@@ -109,7 +113,7 @@ class Box:
         else:
             self.mode_fallback = "player_night"
             self.mode_current = "player_night"
-        self.change_mode(mode=self.mode_current, speak=True)
+        self.change_mode(mode=self.mode_current, speak=False)
 
         # running alarm and automatic mode change
         while(True):
@@ -225,7 +229,7 @@ class Box:
                 i = i + 1 if i + 1 < len(self.mode_list) else 0
                 self.change_mode(mode=self.mode_list[i])
                 return
-        self.clock.speak(vol = self.volume_current)
+        self.clock.speak(vol = self.volume_current) ## tell current time
 
     def change_volume(self):
         "Change the volume of all players"
