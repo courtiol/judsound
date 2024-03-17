@@ -77,9 +77,10 @@ class Player:
         """
 
         file = self.tracks_dictionary[track_name]
+        print(f"play sound {file}")
         self.player.set_media(self.tracks[self.tracks_files.index(file)])
-        self.player.play()
         self.update_volume(vol) # note that volume is not reset after but it should not be a problem
+        self.player.play()
         if wait_till_completion:
             self.wait_done()
         else:

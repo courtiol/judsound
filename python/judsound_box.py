@@ -87,7 +87,9 @@ class Box:
         
         # setting players
         self.player_system = judsound_player.Player(path_music=path_system_sound, tracks_dictionary=tracks_system)
-        self.player_system.play_sound(track_name="start", vol=vol_startup)
+        self.player_system.play_sound(track_name="start", vol=vol_startup) ## not sure why but the very first sound is never
+                                                                           ## emitted by the box, so I repeat this twice
+        self.player_system.play_sound(track_name="start", vol=vol_startup) ## for it to work.
         self.player_music_night = judsound_player.Player(path_music=path_music_night)
         self.player_music_day = judsound_player.Player(path_music=path_music_day)
 
