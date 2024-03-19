@@ -361,4 +361,3 @@ journalctl -p 3 -x
 Rule #1: never jump releases.
 
 I tried once and it broke sudo and I could not do anything but formatting...
-
