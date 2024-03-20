@@ -1,11 +1,29 @@
 #!/usr/bin/python3
 
+import time
+import warnings
 import judsound_box
+
+## PRELUDE
+
+print('*** Starting Judsound ***')
+warnings.filterwarnings('default', category=DeprecationWarning) # to show deprecation warnings in console
+
+time.sleep(10) # give some time for ALSA service to start
+
+file_path = '/home/pi/judsound_alarms'
+try:
+    open(file_path, 'x')
+except FileExistsError:
+    print(f"The file {file_path} already exists.")
 
 ## RUNNING THE PROGRAM
 
-judsound_box.Box(gpio_push_buttons=[11, 10, 22, 9],
-    gpio_button_rotary_push=25, gpio_button_rotary_CLK=7, gpio_button_rotary_DT=8,
+judsound_box.Box(
+    gpio_push_buttons=[11, 10, 22, 9],
+    gpio_button_rotary_push=25,
+    gpio_button_rotary_CLK=7,
+    gpio_button_rotary_DT=8,
     path_music_night="/home/pi/playlist_night",
     path_music_day="/home/pi/playlist_day",
     path_system_sound="/home/pi/playlist_system",

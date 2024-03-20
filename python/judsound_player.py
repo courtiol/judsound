@@ -15,7 +15,10 @@ class Player:
         tracks_dictionary -- a dictionary for the system sounds
         """
 
+        print("Creation of VLC instance")
         instance_vlc = vlc.Instance()
+
+        print("Creation of VLC Player")
         self.player = instance_vlc.media_player_new()
 
         # fetching music tracks and adding them to the player
@@ -27,6 +30,8 @@ class Player:
 
         tracks_paths = [path_music + '/' + s 
                           for s in self.tracks_files] # add path to file names
+
+        print("Adding tracks to VLC instance")     
         self.tracks = [instance_vlc.media_new(tracks_paths[i]) 
                           for i in range(len(tracks_paths))] # register all tracks to VLC 
                                                              # (although only 4 are accessible 
@@ -43,6 +48,7 @@ class Player:
         vol -- an integer specifying the volume used to play the music
         """
 
+        print("Play music")
         if self.player.get_media() is None or os.path.basename(
                 self.player.get_media().get_mrl()) != self.tracks_files[track_index]:
             # case no track playing or other track playing 
@@ -53,10 +59,12 @@ class Player:
             self.player.play()
         else:
             # case correct track already playing -> we pause or resume
-            print("pause or resume playing track")
+            print("pause or resume playing track from where it was")
             was_playing = self.player.is_playing()
             self.player.pause()
+            time.sleep(0.2) # pause otherwise next step does not detect change
             if not was_playing and not self.player.is_playing():
+                print("start replaying track from beginning")
                 # case no resume possible since track had never started 
                 # -> play
                 self.player.stop() # in case the same track had previously 
@@ -76,6 +84,7 @@ class Player:
         wait_till_completion -- a boolean indicating whether or not to wait till the sound has fully played
         """
 
+        print("Play sound")
         file = self.tracks_dictionary[track_name]
         print(f"play sound {file}")
         self.update_volume(vol) # note that volume is not reset after but it should not be a problem

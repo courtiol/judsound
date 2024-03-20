@@ -2,7 +2,6 @@
 
 import gpiozero
 import time
-#import signal # no longer needed since loop for alarm
 import judsound_player
 import judsound_clock
 
@@ -32,11 +31,17 @@ class Box:
     """
 
     def __init__(self,
-                 gpio_push_buttons, gpio_button_rotary_push, gpio_button_rotary_CLK, gpio_button_rotary_DT,
-                 path_music_night, path_music_day, path_system_sound, file_to_alarms,
+                 gpio_push_buttons,
+                 gpio_button_rotary_push,
+                 gpio_button_rotary_CLK,
+                 gpio_button_rotary_DT,
+                 path_music_night,
+                 path_music_day,
+                 path_system_sound,
+                 file_to_alarms,
                  possible_modes = ["player_night", "alarm", "player_day"],
                  vol_ini = 50, vol_step = 1, vol_max = 100, vol_startup = 50, vol_alarm = 50,
-                 hold_time = 1,
+                 hold_time = 2,
                  vol_diff_hours = 1,
                  night_day_h = 8,
                  day_night_h = 20,
@@ -62,8 +67,8 @@ class Box:
 
         # setting the mapping for all physical inputs
         gpiozero.Button.was_held = False
-        self.push_buttons = [gpiozero.Button(btn) for btn in gpio_push_buttons]
-        self.button_rotary_push = gpiozero.Button(gpio_button_rotary_push)
+        self.push_buttons = [gpiozero.Button(btn,bounce_time=0.1) for btn in gpio_push_buttons]
+        self.button_rotary_push = gpiozero.Button(gpio_button_rotary_push,bounce_time=0.1)
         self.button_rotary_CLK = gpiozero.Button(gpio_button_rotary_CLK)
         self.button_rotary_DT = gpiozero.Button(gpio_button_rotary_DT)
     
@@ -78,7 +83,7 @@ class Box:
             # note: i = btn_index is required for lambda to work using the right scope (specific to using for loops)
             # (i.e. don't pass argument(s) directly to push_top_button call)
 
-        
+
         # filling dictionary for system sounds
         for m in range(60):
             key = f'{m:02d}'
@@ -202,7 +207,7 @@ class Box:
             # quit and return to fallback mode
             elif button_index == 3:
                 print(f"quit alarm setting")
-                self.change_mode(mode=self.mode_fallback)    
+                self.change_mode(mode=self.mode_fallback)
 
     def change_mode(self, mode, speak = True):
         if mode == "alarm":
