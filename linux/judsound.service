@@ -1,11 +1,13 @@
 [Unit]
 Description=Judsound
+After=alsa-restore.service
 
 [Service]
-Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 /home/pi/physical_computing/main.py
+ExecStart=/usr/bin/python3 -u /home/pi/physical_computing/main.py
 StandardOutput=file:/home/pi/judsound_output.log
 StandardError=append:/home/pi/judsound_error.log
+Restart=on-failure
+RestartSec=30s
 
 [Install]
 WantedBy=default.target
