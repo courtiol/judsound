@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import gpiozero
+from gpiozero.tools import scaled
 import time
 import judsound_player
 import judsound_clock
@@ -13,13 +14,13 @@ class Box:
     gpio_button_rotary_push -- an integer specifying the GPIO pin number to which the push button from the rotary encoder is connected
     gpio_button_rotary_CLK -- an integer specifying the GPIO pin number to which the CLK output from the rotary encoder is connected
     gpio_button_rotary_DT -- an integer specifying the GPIO pin number to which the DT output from the rotary encoder is connected
+    gpio_button_rotary_max_steps -- an integer specifying the number of steps for the rotary encoder
     path_music_night -- a string specifying the path to the directory where the audio files for the night playlist are stored
     path_music_day -- a string specifying the path to the directory where the audio files for the day playlist are stored
     path_system_sound -- a string specifying the path to the directory where the audio files for clock and system sounds are stored
     file_to_alarms -- a string specifying the file (including its paths) where alarms are written and read
     possible_modes -- an array of strings specifying the possible mode for the player (default = ["player_night", "alarm", "player_day"])
     vol_ini -- an integer specifying the baseline volume (default = 30)
-    vol_step -- an integer specifying by how much the volume changes when the rotary encoder clicks once (default = 1)
     vol_max -- an integer specifying the maximum volume allowed (to protect the speaker; default = 100)
     vol_startup -- an integer specifying the volume of the startup announcement (default = 50)
     vol_alarm -- an integer specifying the volume of the alarm (default = 50)
@@ -35,6 +36,7 @@ class Box:
                  gpio_button_rotary_push,
                  gpio_button_rotary_CLK,
                  gpio_button_rotary_DT,
+                 gpio_button_rotary_max_steps,
                  path_music_night,
                  path_music_day,
                  path_system_sound,
@@ -57,24 +59,26 @@ class Box:
                     "alarm_none": None,
                     "alarm_validation": None,
                     "alarms_list": None,
-                    "alarms_deleted": None}):
+                    "alarms_deleted": None,
+                    "volume": None}):
         "Initialize the box"
 
         # setting volumes
         self.volume_current = vol_ini
-        self.volume_step = vol_step
         self.volume_max = vol_max
 
         # setting the mapping for all physical inputs
         gpiozero.Button.was_held = False
         self.push_buttons = [gpiozero.Button(btn,bounce_time=0.1) for btn in gpio_push_buttons]
         self.button_rotary_push = gpiozero.Button(gpio_button_rotary_push,bounce_time=0.1)
-        self.button_rotary_CLK = gpiozero.Button(gpio_button_rotary_CLK)
-        self.button_rotary_DT = gpiozero.Button(gpio_button_rotary_DT)
-    
+        self.button_rotary_turn = gpiozero.RotaryEncoder(gpio_button_rotary_CLK,
+            gpio_button_rotary_DT,bounce_time=0.1,max_steps=gpio_button_rotary_max_steps)
+        self.button_rotary_turn.steps = self.volume_to_steps(vol=vol_ini,vol_max=vol_max,max_steps=gpio_button_rotary_max_steps)
+        self.max_steps = gpio_button_rotary_max_steps
+
         # adjust settings for the rotary encoder
         self.button_rotary_push.when_pressed = self.push_mode_button
-        self.button_rotary_CLK.when_pressed = self.change_volume
+        self.button_rotary_turn.when_rotated = self.change_volume
 
         # adjust settings for the push buttons
         self.hold_time = hold_time
@@ -236,11 +240,21 @@ class Box:
                 return
         self.clock.speak(vol = self.volume_current) ## tell current time
 
+    def steps_to_volume(self, steps, vol_max, max_steps):
+        "Rescale steps such as those used in rotary encoder to volume scale"
+        vol = int(vol_max*(max_steps+steps)/(2*max_steps))
+        return vol
+
+    def volume_to_steps(self, vol, vol_max, max_steps):
+        "Rescale volume to the scale used by the steps of the rotary encoder"
+        step = vol/vol_max*2*max_steps - max_steps
+        return step
+
     def change_volume(self):
-        "Change the volume of all players"
-        #print(f"CLK = {self.button_rotary_CLK.value} DT = {self.button_rotary_DT.value}")
-        add_volume = self.volume_step if self.button_rotary_DT.value == 0 else - self.volume_step
-        self.volume_current = max(min(self.volume_current+add_volume, self.volume_max), 0)
+        "Update the volume of all players"
+        #self.volume_current = max(min(self.volume_current+add_volume, self.volume_max), 0)
+        self.volume_current = self.steps_to_volume(steps=self.button_rotary_turn.steps, vol_max=self.volume_max, max_steps=self.max_steps)
+        self.player_system.play_sound(track_name="volume", vol=self.volume_current, wait_till_completion=False, sleep=0.1)
         self.player_music_night.update_volume(vol=self.volume_current)
         self.player_music_day.update_volume(vol=self.volume_current)
         self.player_system.update_volume(vol=self.volume_current, verbose=False)

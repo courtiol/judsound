@@ -24,12 +24,13 @@ judsound_box.Box(
     gpio_button_rotary_push=25,
     gpio_button_rotary_CLK=7,
     gpio_button_rotary_DT=8,
+    gpio_button_rotary_max_steps = 10,
     path_music_night="/home/pi/playlist_night",
     path_music_day="/home/pi/playlist_day",
     path_system_sound="/home/pi/playlist_system",
     file_to_alarms="/home/pi/judsound_alarms",
     possible_modes=["player_night", "alarm", "player_day"],
-    vol_ini=50, vol_step=3, vol_max=100, vol_startup=50, vol_alarm=50,
+    vol_ini=20, vol_max=40, vol_startup=30, vol_alarm=50,
     hold_time=1, vol_diff_hours=1,
     night_day_h = 6,
     day_night_h = 20,
@@ -47,4 +48,5 @@ judsound_box.Box(
                      "alarm_none": "alarm_none.wav",
                      "alarm_validation": "alarm_validation.mp3",
                      "alarms_list": "alarms_list.wav",
-                     "alarms_deleted":"alarms_deleted.wav"})
+                     "alarms_deleted":"alarms_deleted.wav",
+                     "volume":"water-droplet-2-165634_short.wav"})

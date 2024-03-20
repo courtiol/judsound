@@ -73,7 +73,7 @@ class Player:
                 self.player.play()
         self.update_volume(vol)
 
-    def play_sound(self, track_name, vol, wait_till_completion = True):
+    def play_sound(self, track_name, vol, wait_till_completion = True, sleep=0.5):
         """Play an audio file fully with no pause/resume/stop possible
 
         This is the function called to speak the time and produce other system sound
@@ -93,7 +93,7 @@ class Player:
         if wait_till_completion:
             self.wait_done()
         else:
-            time.sleep(0.5)
+            time.sleep(sleep)
 
     def wait_done(self):
         time.sleep(0.2)
