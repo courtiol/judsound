@@ -212,6 +212,32 @@ I simply followed the instruction from the message (i.e. run `ssh-keygen -f ...`
 It worked-
 
 
+### Set locales
+
+Somehow my locales were not fine, so I just did:
+
+```
+sudo nano /etc/environment
+```
+
+and added
+
+```
+LC_ALL=en_US.UTF-8
+LANG=en_US.UTF-8
+LANGUAGE=en_US.UTF-8
+```
+
+I aslo did the same here:
+
+```
+sudo nano /etc/default/locale
+```
+
+Then I rebooted.
+It is probably an overkill, but that worked.
+
+
 ### Update everything
 
 I tried to update everything:
@@ -238,21 +264,24 @@ sudo nano /boot/firmware/config.txt
 I commented the following to inactivate onboard audio:
 
 ```
-# Enable audio (loads snd_bcm2835) (removed by ALEX)
-# dtparam=audio=on
+# Enable audio (loads snd_bcm2835) (modified by ALEX)
+dtparam=audio=off
 ```
 
 I also added:
 
 ```
-# enable sound card (introduced by ALEX)
+# Enable sound card (introduced by ALEX)
 dtoverlay=hifiberry-dac
 force_eeprom_read=0
 
-# enable power on / off from GPIO (introduced by ALEX).
+# Disable HDMI audio (introduced by ALEX)
+dtoverlay=vc4-kms-v3d,audio=off
+
+# Enable power on / off from GPIO (introduced by ALEX).
 dtoverlay=gpio-shutdown
 
-# enable debuging message in dmsg (introduced by ALEX)
+# Enable debuging message in dmsg (introduced by ALEX)
 dtdebug=1
 ```
 
@@ -278,15 +307,21 @@ In `home/pi`, create:
 - a folder `physical_computing` and place there all the python files of the project should be placed
 
 
-### Required dependencies
+### Dependencies
 
-I installed vlc (which is takes quite some time):
+The project requires to install `python3-vlc` (which is takes quite some time):
 
 ```
 sudo apt install python3-vlc
 ```
 
 Note: there is no need to install `vlc` directly (i.e. outside python, an even large set of files).
+
+Also, very useful for debugging:
+
+```
+sudo apt install ipython3
+```
 
 
 ### Automation using a systemd service
@@ -301,48 +336,172 @@ The idea is to write a service unit (see file `judsound.service` in this repo).
 
 This file points to the python code and define where to right console outputs (although I am not sure that this works since I see instead console outputs in journalctl; see below).
 
-Instead of using system-wide systemd service, I used the user one; i.e. I created a sim link to the service file in a newly created folder `.config/systemd/user/`.
+Instead of using system-wide systemd service, I used the user one; i.e. I created a sim link to the service file in a newly created folder in home `.config/systemd/user/`:
+
+```
+mkdir -p ~/.config/systemd/user/
+ln -s ~/physical_computing/judsound.service ~/.config/systemd/user/judsound.service
+chown pi:pi ~/.config/systemd/user/judsound.service
+chmod 0644 ~/.config/systemd/user/judsound.service
+```
 
 Then, I did:
 
 ```
+systemctl --user start judsound.service
+systemctl --user enable judsound.service
+```
+
+Check that things are ok here:
+
+```
+systemctl --user list-unit-files 
+```
+
+Note that if you update `/physical_computing/judsound.service `, for the effect to be perceived in the running session, it is needed to do:
+
+
+```
+systemctl --user daemon-reload
+systemctl --user stop judsound.service
+systemctl --user disable judsound.service
+ln -s ~/physical_computing/judsound.service ~/.config/systemd/user/judsound.service
+chown pi:pi ~/.config/systemd/user/judsound.service
+chmod 0644 ~/.config/systemd/user/judsound.service
 systemctl --user enable judsound.service
 systemctl --user start judsound.service
 ```
 
-Since this is handled by the systemd of the user (pi), the user needs to be automatically active after reboot.
+Since this service is handled by the systemd of the user (pi), the user needs to be automatically active after reboot.
+
 This can simply be done by calling:
 
 ```
 sudo loginctl enable-linger $USER
 ```
 
+Reboot.
+
 
 ## Troubleshooting
 
-### Service management
+### Check that the Pyton program is working
 
-To check the status of the systemd service, I do:
+```
+python3 physical_computing/main.py 
+```
+
+### Checking that GPIOs are working
+
+Check that the following does not result in any error:
+
+```
+ipython3
+from gpiozero import Button
+button = Button(22,bounce_time=0.1)
+
+def press():
+  print("pressed\n")
+
+button.when_pressed = press
+```
+
+Note the this must be launched from your home folder or any other folder for which you have rights (but not from a system folder!).
+
+
+### Checking that VLC is working
+
+Try the following in a folder that contains e.g. the file `test.mp3`:
+
+```
+ipython3
+import vlc
+instance_vlc = vlc.Instance()
+player = instance_vlc.media_player_new()
+track = instance_vlc.media_new("test.mp3")
+player.set_media(track)
+player.audio_set_volume(20)
+player.play()
+```
+
+If you here the music, then try pausing:
+
+```
+player.pause()
+```
+
+Try resuming:
+
+```
+player.play() # or player.pause()
+```
+
+Try stopping:
+
+```
+player.stop()
+```
+
+These tests showed that an error message I get does not impact behaviour...:
+
+```
+vlcpulse audio output error: PulseAudio server connection failure: Connection refused
+```
+
+### Sound issues
+
+I had possible problems caused by a wrong sound card being used by systemd.
+I did this to check which card(s) are setup:
+
+```
+alsactl info
+aplay -l 
+```
+
+Since I used a HifiBerry miniAmp, I want HifiBerry there.
+Initially, the HDMI driver was taking over, but I modified the dtoverlay setting accordingly and it should now be ok.
+
+
+### Systemd service management
+
+To check the status of the systemd services, I do:
+
+```
+systemctl --user list-unit-files
+```
+
+For the specific judsound.service:
 
 ```
 systemctl --u status judsound.service
+journalctl --user-unit judsound.service
 ```
 
 Note the `-u` is required because it is a user-level service.
 
-To restart the service, just I use:
+If the log gets too cluttered, you can reset it (forever):
+
+```
+sudo journalctl --rotate
+sudo journalctl --vacuum-time=1s
+```
+
+
+To restart the service, I use:
 
 ```
 systemctl --u restart judsound.service
 ```
 
+
 ### Log inspection
 
-To check the log of the judsound system, I simply do:
+To check the log of the judsound system, I used to simply do:
 
 ```
 journalctl | grep python
 ```
+But this is no longer working...
 
 Note: there is no need for sudo since `judsound.service` is a user-level service.
 
