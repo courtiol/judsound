@@ -7,9 +7,9 @@ import judsound_box
 ## PRELUDE
 
 print('*** Starting Judsound ***')
-warnings.filterwarnings('default', category=DeprecationWarning) # to show deprecation warnings in console
+warnings.filterwarnings('default', category = DeprecationWarning) # to show deprecation warnings in console
 
-time.sleep(10) # give some time for ALSA service to start
+time.sleep(10) # give some time for ALSA service to start (10s should be OK)
 
 file_path = '/home/pi/judsound_alarms'
 try:
@@ -20,20 +20,28 @@ except FileExistsError:
 ## RUNNING THE PROGRAM
 
 judsound_box.Box(
-    gpio_push_buttons=[11, 10, 22, 9],
-    gpio_button_rotary_push=25,
-    gpio_button_rotary_CLK=7,
-    gpio_button_rotary_DT=8,
-    gpio_button_rotary_max_steps = 15, #half of the effective number of steps
-    path_music_night="/home/pi/playlist_night",
-    path_music_day="/home/pi/playlist_day",
-    path_system_sound="/home/pi/playlist_system",
-    file_to_alarms="/home/pi/judsound_alarms",
-    possible_modes=["player_night", "alarm", "player_day"],
-    vol_ini=20, vol_min = 10, vol_max=40, vol_startup=30, vol_alarm=50,
-    hold_time=1, vol_diff_hours=1,
+    gpio_push_buttons = [11, 10, 22, 9],
+    gpio_button_rotary_push = 25,
+    gpio_button_rotary_CLK = 7,
+    gpio_button_rotary_DT = 8,
+    gpio_button_rotary_max_steps = 20, #half of the effective number of steps
+    path_music_night = "/home/pi/playlist_night",
+    path_music_day = "/home/pi/playlist_day",
+    path_system_sound = "/home/pi/playlist_system",
+    file_to_alarms = "/home/pi/judsound_alarms",
+    possible_modes = ["player_night", "alarm", "player_day"],
+    vol_min = 10,
+    vol_max = 50,
+    vol_music_day = 30,
+    vol_music_night = 15,
+    vol_system_day = 35,
+    vol_system_night = 25,
+    vol_startup_msg = 50,
+    vol_alarm = 50,
+    vol_diff_hours = 1,
+    hold_time = 1,
     night_day_h = 6,
-    day_night_h = 20,
+    day_night_h = 22,
     tracks_system = {# welcome sound
                      "start": "start.wav",
                      # changing mode
@@ -49,4 +57,5 @@ judsound_box.Box(
                      "alarm_validation": "alarm_validation.mp3",
                      "alarms_list": "alarms_list.wav",
                      "alarms_deleted":"alarms_deleted.wav",
+                     # volume feedback sound
                      "volume":"water-droplet-2-165634_short.wav"})

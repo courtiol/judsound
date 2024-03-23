@@ -7,12 +7,13 @@ import time
 class Player:
     "Define class which handles the music (VLC) player"
 
-    def __init__(self, path_music, tracks_dictionary = None):
+    def __init__(self, path_music, tracks_dictionary = None, vol = 0):
         """Initialize a VLC player
 
         Keyword arguments:
         path_music -- a string specifying the path to the directory where the audio files are stored 
         tracks_dictionary -- a dictionary for the system sounds
+        vol -- an integer specifying the baseline volume for the player
         """
 
         print("Creation of VLC instance")
@@ -20,6 +21,8 @@ class Player:
 
         print("Creation of VLC Player")
         self.player = instance_vlc.media_player_new()
+
+        self.volume = self.change_volume(vol = vol)
 
         # fetching music tracks and adding them to the player
         path_music = os.path.normpath(path_music)
@@ -38,14 +41,13 @@ class Player:
                                                              # via the top push buttons)
         self.tracks_dictionary = tracks_dictionary
 
-    def play_music(self, track_index, vol):
+    def play_music(self, track_index):
         """Play an audio file based on its number and handle pause/resume/stop
         
         This is the function called when a push button has been pressed (in playlist mode).
 
         Keyword arguments:
         track_index -- an integer specifying the number of the track to play
-        vol -- an integer specifying the volume used to play the music
         """
 
         print("Play music")
@@ -71,23 +73,32 @@ class Player:
                                    # played till end, it needs to be stopped 
                                    # before playing
                 self.player.play()
-        self.update_volume(vol)
+        self.update_volume(vol = self.volume)
 
-    def play_sound(self, track_name, vol, wait_till_completion = True, sleep=0.5):
+    def play_sound(self,
+                   track_name,
+                   vol_override = 0,
+                   wait_till_completion = True,
+                   sleep = 0.5):
         """Play an audio file fully with no pause/resume/stop possible
 
         This is the function called to speak the time and produce other system sound
 
         Keyword arguments:
         track_name -- a string indicating which audio file to play (as defined in self.tracks_dictionary)
-        vol -- an integer specifying the volume used to play the music
+        vol_override -- an integer specifying the volume if the volume of the player should not be used (0 = no override)
         wait_till_completion -- a boolean indicating whether or not to wait till the sound has fully played
+        sleep -- the time in sec before another sound can be played
         """
 
         print("Play sound")
         file = self.tracks_dictionary[track_name]
         print(f"play sound {file}")
-        self.update_volume(vol) # note that volume is not reset after but it should not be a problem
+        if vol_override > 0:
+            vol = vol_override
+        else: 
+            vol = self.volume
+        self.update_volume(vol = vol) # note that volume is not reset after but it should not be a problem
         self.player.set_media(self.tracks[self.tracks_files.index(file)])
         self.player.play()
         if wait_till_completion:
@@ -101,9 +112,16 @@ class Player:
             time.sleep(0.2)
 
     def update_volume(self, vol, verbose = True):
-        "Update the volume of the player"
+        "Update the volume of the player on the fly (does not change self.volume)"
         if verbose:
-            print(f"update volume to {vol}")
+            print(f"update volume (on the fly) to {vol}")
+        self.player.audio_set_volume(vol)
+
+    def change_volume(self, vol, verbose = True):
+        "Change the baseline volume of the player (does change self.volume)"
+        if verbose:
+            print(f"change volume to {vol}")
+        self.volume = vol
         self.player.audio_set_volume(vol)
 
     def stop(self):
