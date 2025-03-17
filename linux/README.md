@@ -9,11 +9,18 @@ This is the folder where I put all the info related to everything soft related t
 
 The official doc is this one: https://www.raspberrypi.com/documentation/computers/getting-started.html#installing-the-operating-system
 
-On a desktop computer Linux (Kubuntu), I first installed rpi-imager:
+On a desktop computer Linux, I first installed rpi-imager:
 
 ```
 sudo apt install rpi-imager
 ```
+
+or 
+
+```
+sudo dnf install rpi-imager
+```
+
 
 Then I ran this software:
 
@@ -29,18 +36,17 @@ I then selected the correct storage ("CHOOSE STORAGE").
 
 Note that my computer did not read the micro-sd card in its native reader, so I used an external card reader.
 
-Before clicking on "WRITE", I clicked on the little gear to set the following options:
-- enable SSH (I used with public key)
+I clicked on EDIT settings and I do this:
+- set hostname
 - set username and passwd
 - configure wireless LAN
 - set local setting
-- do not eject media when finished
+- enable SSH (I used with public key)
 
 Notes: 
-- I did not set the hostname (default is good)
 - some of these settings did not seem to work as intended, but I show below how to fix the issues.
 
-Then I clicked on "WRITE" to write the image of the OS on the micro-SD card.
+Then I clicked on "YES" to write the image of the OS on the micro-SD card.
 
 I made sure to eject the micro-SD card properly.
 
@@ -57,7 +63,7 @@ Nothing I tried worked, so I gave up setting that up before first run.
 
 I connected a screen and a keyboard to the Pi (required unless the gadget mode is working).
 
-As I only have a single screen, I connected the HDMI cable to a HDMI video capture dongle, which generates a video flow I read in using Zoom (selecting USB Video as the camera).
+As I only have a single screen, I connected the HDMI cable to a HDMI video capture dongle, which generates a video flow I read in using Kamoso (Zoom works but it has a much poorer resolution and frame). I selected USB Video as the camera.
 
 I put the micro-SD card into the Pi and powered up the Pi.
 In principle it should be possible to connect the Pi to the USB cable only to power it up, but in my case, there is too much gear, so I plug in the electric cable.
@@ -81,7 +87,9 @@ hostname -I
 
 So I used `raspi-config` to fix that (in menu **System Options**).
 
-I also enabled the SSH server (using **Interface Options**), but perhaps that is no necessary if the step above during installation worked (I thought it did not hurt anyhow).
+I also enabled the SSH server (using **Interface Options**), but perhaps that is not necessary if the step above during installation worked (I thought it did not hurt anyhow).
+
+See end of file for trouble shooting.
 
 Then I rebooted and logged in.
 
@@ -114,7 +122,7 @@ sudo nano /boot/firmware/config.txt
 For this, I added:
 
 ```
-# Disable Bluetooth
+# Disable Bluetooth (introduced by ALEX)
 dtoverlay=disable-bt
 ```
 
@@ -161,6 +169,7 @@ sudo nmcli -p connection show
 ```
 
 This showed me the name of my network connection (my WiFis SSID).
+Note that if the wifi was configured while creating the OS image, it may be called "preconfigured".
 
 Then, I ran the following after changing "MyBox" by the name of my network connection and 192.168.X.Z by the fixed IP adress I wanted to use and 192.168.X.ZZ for the gateway and network addresses I wanted to use (e.g. 192.168.X.254):
 
@@ -228,7 +237,7 @@ LANG=en_US.UTF-8
 LANGUAGE=en_US.UTF-8
 ```
 
-I aslo did the same here:
+I also did the same here:
 
 ```
 sudo nano /etc/default/locale
@@ -306,6 +315,7 @@ In `home/pi`, create:
 
 - a folder `physical_computing` and place there all the python files of the project should be placed
 
+Edit the paths in the file `main.py` if you username is not `pi`.
 
 ### Dependencies
 
@@ -336,12 +346,15 @@ The idea is to write a service unit (see file `judsound.service` in this repo).
 
 This file points to the python code and define where to right console outputs (although I am not sure that this works since I see instead console outputs in journalctl; see below).
 
-Instead of using system-wide systemd service, I used the user one; i.e. I created a sim link to the service file in a newly created folder in home `.config/systemd/user/`:
+Instead of using system-wide systemd service, I used the user one; i.e. I created a sim link to the service file in a newly created folder in home `.config/systemd/user/`.
+
+So edit the file `judsound.service` to make sure that the paths are correct (update username if you username is not `pi`, and not to be mixed up with hostname).
+Then copy the file `judsound.service` into the folder `physical_computing` and then do the following after replacing `[user]` by your username (and not the hostname):
 
 ```
 mkdir -p ~/.config/systemd/user/
 ln -s ~/physical_computing/judsound.service ~/.config/systemd/user/judsound.service
-chown pi:pi ~/.config/systemd/user/judsound.service
+chown [user]:[user] ~/.config/systemd/user/judsound.service
 chmod 0644 ~/.config/systemd/user/judsound.service
 ```
 
@@ -355,24 +368,23 @@ systemctl --user enable judsound.service
 Check that things are ok here:
 
 ```
-systemctl --user list-unit-files 
+systemctl --user list-unit-files | grep judsound
 ```
 
 Note that if you update `/physical_computing/judsound.service `, for the effect to be perceived in the running session, it is needed to do:
-
 
 ```
 systemctl --user daemon-reload
 systemctl --user stop judsound.service
 systemctl --user disable judsound.service
 ln -s ~/physical_computing/judsound.service ~/.config/systemd/user/judsound.service
-chown pi:pi ~/.config/systemd/user/judsound.service
+chown [user]:[user] ~/.config/systemd/user/judsound.service
 chmod 0644 ~/.config/systemd/user/judsound.service
 systemctl --user enable judsound.service
 systemctl --user start judsound.service
 ```
 
-Since this service is handled by the systemd of the user (pi), the user needs to be automatically active after reboot.
+Since this service is handled by the systemd of the user, the user needs to be automatically active after reboot.
 
 This can simply be done by calling:
 
@@ -493,6 +505,45 @@ To restart the service, I use:
 systemctl --u restart judsound.service
 ```
 
+### WIFI issues
+
+Check that you detect wifi:
+
+```
+nmcli dev wifi list
+```
+
+If you router is not listed but should be, it could be a channel issue.
+On router, try to change channel for 2.4 Ghz wifi and try again.
+The list of allowed channel is shown here on the pi:
+
+```
+iwlist wlan0 freq
+```
+
+Some channel are not allowed with some country settings.
+The country that maters for that seems to be the one shown here:
+
+```
+iw reg get
+```
+
+which you can change as this (here for germany):
+
+```
+sudo iw reg set DE
+```
+
+### SSH key issues
+If you are using a wrong set of keys, without password authentification you may struggle to add the new key.
+The easiest is simply to log in locally and then add the correct public keys there:
+
+```
+nano .ssh/authorized_keys
+```
+
+If there is a problem on the desktop side "Host identification has changed".
+Just remove the line starting with the IP of the Pi in .ssh/known_hosts
 
 ### Log inspection
 
