@@ -63,6 +63,7 @@ class Box:
                     "alarm": None,
                     "player_night": None,
                     "player_day": None,
+                    "alarm_sound": None,
                     "alarm_preset_at": None,
                     "alarm_set": None,
                     "alarm_not_set": None,

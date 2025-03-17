@@ -49,6 +49,7 @@ judsound_box.Box(
                      "player_night": "player_night_mode.wav",
                      "player_day": "player_day_mode.wav",
                      # setting alarm
+                     "alarm_sound": "start.wav",
                      "alarm_preset_at":"alarm_preset_at.wav",
                      "alarm_set":"alarm_set.mp3",
                      "alarm_not_set": "alarm_not_set.wav",

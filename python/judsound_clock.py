@@ -147,7 +147,7 @@ class Clock:
             target = self.convert_hhmm_to_hm(alarm)
             if target == now:
                 print("ALARM RINGING!")
-                self.player_system.play_sound(track_name = "start", vol_override = self.volume_alarm)
+                self.player_system.play_sound(track_name = "alarm_sound", vol_override = self.volume_alarm)
             else:
                 new_alarms.append(alarm) # only keep alarms that did not trigger (used alarms are discarded)
         self.alarms = new_alarms # update in memory alarms
