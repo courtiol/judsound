@@ -183,6 +183,7 @@ class Box:
         self.change_mode(mode = self.mode_current, speak = False)
 
         # main loop: running alarm and automatic mode change (which happens if not playing)
+        # FIXME? it still change mode if a music is paused, good behaviour?
         while(True):
             self.clock.ring_alarm()
             if self.clock.is_day() and not self.player_music_day.player.is_playing() and not self.player_music_night.player.is_playing() and not self.player_system.player.is_playing() and not self.mode_current == "alarm":
