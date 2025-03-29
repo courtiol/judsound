@@ -175,8 +175,8 @@ Then, I ran the following after changing "MyBox" by the name of my network conne
 
 ```
 sudo nmcli c mod "MyBox" ipv4.addresses 192.168.X.Z/24 ipv4.method manual
-sudo nmcli con mod "MyBox" ipv4.gateway 192.168.X.ZZ
-sudo nmcli con mod "MyBox" ipv4.dns 192.168.X.ZZ
+sudo nmcli c mod "MyBox" ipv4.gateway 192.168.X.ZZ
+sudo nmcli c mod "MyBox" ipv4.dns 192.168.X.ZZ
 ```
 
 To update the IP of the Pi, I then did:
