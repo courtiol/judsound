@@ -185,13 +185,13 @@ class Box:
         # main loop: running alarm and automatic mode change (which happens if not playing)
         while(True):
             self.clock.ring_alarm()
-            if self.clock.is_day() and not self.player_music_day.player.is_playing() and not self.player_music_night.player.is_playing() and not self.player_system.player.is_playing():
+            if self.clock.is_day() and not self.player_music_day.player.is_playing() and not self.player_music_night.player.is_playing() and not self.player_system.player.is_playing() and not self.mode_current == "alarm":
                 self.mode_fallback = "player_day"
                 self.change_mode(mode = "player_day", speak = False)
                 self.player_system.change_volume(vol = self.volume_system_day)
                 self.player_music_day.change_volume(vol = self.volume_music_day)
                 self.player_music_night.change_volume(vol = self.volume_music_day)
-            elif not self.clock.is_day() and not self.player_music_day.player.is_playing() and not self.player_music_night.player.is_playing() and not self.player_system.player.is_playing():
+            elif not self.clock.is_day() and not self.player_music_day.player.is_playing() and not self.player_music_night.player.is_playing() and not self.player_system.player.is_playing() and not self.mode_current == "alarm":
                 self.mode_fallback = "player_night"
                 self.change_mode(mode = "player_night", speak = False)
                 self.player_system.change_volume(vol = self.volume_system_night)
@@ -381,7 +381,3 @@ class Box:
                                                              vol_min = self.volume_min,
                                                              vol_max = self.volume_max,
                                                              max_steps = self.max_steps)
-
-
-
-        
